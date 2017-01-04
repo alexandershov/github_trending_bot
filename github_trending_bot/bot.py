@@ -6,7 +6,10 @@ import requests
 
 PATH = '/tmp/github_trending_last_update'
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)-15s %(levelname)s %(filename)s:%(lineno)s %(message)s',
+    level=logging.INFO,
+)
 
 
 class Bot:
