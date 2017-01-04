@@ -1,0 +1,9 @@
+[Unit]
+Description='Telegram bot to show github trending repositories'
+
+[Service]
+User=github_trending_bot
+Type=simple
+PIDFile=/run/github_trending_bot.pid
+EnvironmentFile=/etc/github_trending_bot.d/environment
+ExecStart=/usr/local/bin/github_trending_bot

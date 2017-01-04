@@ -13,6 +13,13 @@ logging.basicConfig(
 )
 
 
+class Update:
+    def __init__(self, telegram_id: int, chat_id: int, message_id: int):
+        self.telegram_id = telegram_id
+        self.chat_id = chat_id
+        self.message_id = message_id
+
+
 class Bot:
     def __init__(self, telegram_token: str):
         assert telegram_token
@@ -48,13 +55,6 @@ class Bot:
         logging.info('sending reply to %s with params %r', chat_id, params)
         response = requests.post(url, json=params)
         response.raise_for_status()
-
-
-class Update:
-    def __init__(self, telegram_id: int, chat_id: int, message_id: int):
-        self.telegram_id = telegram_id
-        self.chat_id = chat_id
-        self.message_id = message_id
 
 
 class Repo:
@@ -121,7 +121,3 @@ def _read_offset() -> int:
 def _save_offset(offset: int):
     with open(PATH, 'w') as fileobj:
         fileobj.write(str(offset))
-
-
-if __name__ == '__main__':
-    main()

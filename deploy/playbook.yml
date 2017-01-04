@@ -1,0 +1,26 @@
+- hosts: goslow
+  become: yes
+  tasks:
+  - name: create github_trending_bot user
+    user: name=github_trending_bot
+
+  - name: ensure directory /etc/github_trending_bot exists
+    file: path=/etc/github_trending_bot.d state=directory
+
+  - name: copy environment
+    copy: src=environment dest=/etc/github_trending_bot.d/environment
+
+  - name: ensure file /tmp/github_trending_last_update has content
+    copy: content=669203916 dest=/tmp/github_trending_last_update force=no
+
+  - name: ensure file /tmp/github_trending_last_update is owned by github_trending_bot
+    file: path=/tmp/github_trending_last_update owner=github_trending_bot
+
+  - name: copy systemd config
+    copy: src=github_trending_bot.service dest=/lib/systemd/system/github_trending_bot.service
+
+  - name: ensure service is started
+    service: name=github_trending_bot state=started
+
+  - name: ensure service is restarted
+    service: name=github_trending_bot state=restarted
