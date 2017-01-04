@@ -110,11 +110,8 @@ def _get_next_offset(bot_updates):
 
 
 def _read_offset():
-    try:
-        with open(PATH, 'r') as fileobj:
-            return int(fileobj.read())
-    except FileNotFoundError:
-        return 0
+    with open(PATH, 'r') as fileobj:
+        return int(fileobj.read())
 
 
 def _save_offset(offset):
