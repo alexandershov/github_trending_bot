@@ -25,12 +25,16 @@ class Bot:
         response = requests.post(url, json=params)
         response.raise_for_status()
         return [
-            Update(item['update_id'], item['message']['chat']['id'])
+            Update(
+                telegram_id=item['update_id'],
+                chat_id=item['message']['chat']['id'],
+                message_id=item['message']['message_id'],
+            )
             for item in response.json()['result']
             if item['message']['text'] == '/show'
             ]
 
-    def reply(self, chat_id, text):
+    def reply(self, chat_id, message_id, text):
         url = f'https://api.telegram.org/bot{self.telegram_token}/sendMessage'
         params = dict(
             chat_id=chat_id,
@@ -43,9 +47,10 @@ class Bot:
 
 
 class Update:
-    def __init__(self, telegram_id, chat_id):
+    def __init__(self, telegram_id, chat_id, message_id):
         self.telegram_id = telegram_id
         self.chat_id = chat_id
+        self.message_id = message_id
 
 
 class Repo:
@@ -65,7 +70,7 @@ def reply_to_update(bot, update, repositories):
         part = f'<a href="{repo.url}">{repo.name}</a> - {repo.description}'
         message_parts.append(part)
     message = '\n'.join(message_parts)
-    bot.reply(update.chat_id, message)
+    bot.reply(update.chat_id, update.message_id, message)
 
 
 def get_trending_repos(github_token):
