@@ -25,8 +25,9 @@ class Bot:
         response = requests.post(url, json=params)
         response.raise_for_status()
         return [
-            Update(item['update_id'])
+            Update(item['update_id'], item['message']['chat']['id'])
             for item in response.json()['result']
+            if item['message']['text'] == '/show'
             ]
 
     def reply(self, chat_id, text):
@@ -34,15 +35,17 @@ class Bot:
         params = dict(
             chat_id=chat_id,
             text=text,
+            parse_mode='HTML',
         )
-        logging.info('sending reply to %s', chat_id)
+        logging.info('sending reply to %s with params %r', chat_id, params)
         response = requests.post(url, json=params)
         response.raise_for_status()
 
 
 class Update:
-    def __init__(self, telegram_id):
+    def __init__(self, telegram_id, chat_id):
         self.telegram_id = telegram_id
+        self.chat_id = chat_id
 
 
 class Repo:
@@ -59,23 +62,25 @@ def make_bot():
 def reply_to_update(bot, update, repositories):
     message_parts = []
     for repo in repositories:
-        part = f'<a href="{repo.url}"><b>{repo.name}</b></a> - {repo.description}'
+        part = f'<a href="{repo.url}">{repo.name}</a> - {repo.description}'
         message_parts.append(part)
     message = '\n'.join(message_parts)
-    bot.reply(update['chat']['id'], message)
+    bot.reply(update.chat_id, message)
 
 
 def get_trending_repos(github_token):
     headers = {
-        'Authorization': f'token: {github_token}',
+        'Authorization': f'token {github_token}',
     }
     start_from = dt.datetime.now() - dt.timedelta(days=7)
     url = (f'https://api.github.com/search/repositories?'
-           f'sort=stars&order=desc&q=created:>{start_from:%Y-%m-d}&per_page=10')
+           f'sort=stars&order=desc&q=created:>{start_from:%Y-%m-%d}&per_page=10')
+    logging.info(
+        'getting trending repositories from github, headers %r, url %r', headers, url)
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     return [
-        Repo(name=item['name'], description=item['description'], url=item['url'])
+        Repo(name=item['name'], description=item['description'], url=item['html_url'])
         for item in response.json()['items']
         ]
 
@@ -96,7 +101,7 @@ def main():
 
 
 def _get_next_offset(bot_updates):
-    return max(update.telegram_id for update in bot_updates)
+    return max(update.telegram_id for update in bot_updates) + 1
 
 
 def _read_offset():
