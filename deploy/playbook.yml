@@ -7,7 +7,7 @@
   - name: ensure directory /etc/github_trending_bot exists
     file: path=/etc/github_trending_bot.d state=directory
 
-  - name: copy environment
+  - name: copy environment file
     copy: src=environment dest=/etc/github_trending_bot.d/environment
 
   - name: ensure file /tmp/github_trending_last_update has content

@@ -32,10 +32,10 @@ class Bot:
             timeout=timeout,
             limit=limit,
         )
-        logging.info('getting updates from telegram')
+        logging.info('getting updates from telegram ...')
         response = requests.post(url, json=params)
         response.raise_for_status()
-        return [
+        updates = [
             Update(
                 telegram_id=item['update_id'],
                 chat_id=item['message']['chat']['id'],
@@ -44,6 +44,8 @@ class Bot:
             for item in response.json()['result']
             if item['message']['text'] == '/show'
             ]
+        logging.info('got %d updates from telegram', len(updates))
+        return updates
 
     def reply(self, chat_id, message_id, text):
         url = f'https://api.telegram.org/bot{self.telegram_token}/sendMessage'
