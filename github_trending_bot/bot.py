@@ -1,3 +1,4 @@
+from typing import List
 import datetime as dt
 import logging
 import os
@@ -13,11 +14,11 @@ logging.basicConfig(
 
 
 class Bot:
-    def __init__(self, telegram_token):
+    def __init__(self, telegram_token: str):
         assert telegram_token
         self.telegram_token = telegram_token
 
-    def get_updates(self, offset, limit, timeout):
+    def get_updates(self, offset: int, limit: int, timeout: int) -> List[Update]:
         url = f'https://api.telegram.org/bot{self.telegram_token}/getUpdates'
         params = dict(
             offset=offset,
@@ -50,24 +51,24 @@ class Bot:
 
 
 class Update:
-    def __init__(self, telegram_id, chat_id, message_id):
+    def __init__(self, telegram_id: int, chat_id: int, message_id: int):
         self.telegram_id = telegram_id
         self.chat_id = chat_id
         self.message_id = message_id
 
 
 class Repo:
-    def __init__(self, name, description, url):
+    def __init__(self, name: str, description: str, url: str):
         self.name = name
         self.description = description
         self.url = url
 
 
-def make_bot():
+def make_bot() -> Bot:
     return Bot(os.getenv('TELEGRAM_TOKEN'))
 
 
-def reply_to_update(bot, update, repositories):
+def reply_to_update(bot: Bot, update: Update, repositories: List[Repo]):
     message_parts = []
     for repo in repositories:
         part = f'<a href="{repo.url}">{repo.name}</a> - {repo.description}'
@@ -76,7 +77,7 @@ def reply_to_update(bot, update, repositories):
     bot.reply(update.chat_id, update.message_id, message)
 
 
-def get_trending_repos(github_token):
+def get_trending_repos(github_token: str) -> List[Repo]:
     headers = {
         'Authorization': f'token {github_token}',
     }
@@ -108,16 +109,16 @@ def main():
             _save_offset(offset)
 
 
-def _get_next_offset(bot_updates):
+def _get_next_offset(bot_updates: List[Update]) -> int:
     return max(update.telegram_id for update in bot_updates) + 1
 
 
-def _read_offset():
+def _read_offset() -> int:
     with open(PATH, 'r') as fileobj:
         return int(fileobj.read())
 
 
-def _save_offset(offset):
+def _save_offset(offset: int):
     with open(PATH, 'w') as fileobj:
         fileobj.write(str(offset))
 
