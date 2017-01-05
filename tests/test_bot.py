@@ -91,7 +91,7 @@ def test_github_api_find_trending_repositories_bad_status():
 
 
 @responses.activate
-def test_github_api_find_trending_repositories_invalid_response():
+def test_github_api_find_trending_repositories_not_a_json():
     responses.add(
         responses.GET,
         'https://api.github.com/search/repositories',
@@ -106,7 +106,7 @@ def test_github_api_find_trending_repositories_invalid_response():
 
 
 @responses.activate
-def test_github_api_find_trending_repositories_invalid_response():
+def test_github_api_find_trending_repositories_bad_item():
     responses.add(
         responses.GET,
         'https://api.github.com/search/repositories',
@@ -114,6 +114,23 @@ def test_github_api_find_trending_repositories_invalid_response():
             'items': [
                 {'no': 'keys'}
             ]
+        },
+    )
+    api = bot.GithubApi('some_github_token')
+    with pytest.raises(bot.GithubApiError):
+        api.find_trending_repositories(
+            created_after=dt.datetime(2017, 1, 5, 12, 3, 23, 686),
+            limit=1,
+        )
+
+
+@responses.activate
+def test_github_api_find_trending_repositories_bad_items_type():
+    responses.add(
+        responses.GET,
+        'https://api.github.com/search/repositories',
+        json={
+            'items': 9,
         },
     )
     api = bot.GithubApi('some_github_token')
