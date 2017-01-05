@@ -67,6 +67,11 @@ def test_github_api():
             'Accept': 'application/vnd.github.v3+json',
         },
     )
+    assert len(repositories) == 1
+    repo = repositories[0]
+    assert repo.name == 'some_name'
+    assert repo.description == 'some_description'
+    assert repo.url == 'http://example.com'
 
 
 def _get_http_get_params(parse_result):
