@@ -1,6 +1,7 @@
 import datetime as dt
 import logging
 import os
+import sys
 import typing as tp
 
 import requests
@@ -131,16 +132,15 @@ def get_trending_repos(github_token: str, age_in_days: int) -> tp.List[Repo]:
 
 
 def main():
-    bot = make_bot()
-    github_token = os.getenv('GITHUB_TOKEN')
-    assert github_token
+    config = _get_config_or_exit()
+    bot = Bot(config.telegram_token)
     offset = _read_offset()
     while True:
         bot_updates = bot.get_updates(offset=offset, limit=5, timeout=1000)
         if bot_updates:
             for update in bot_updates:
                 # TODO: use caching
-                repos = get_trending_repos(github_token, update.age_in_days)
+                repos = get_trending_repos(config.github_token, update.age_in_days)
                 reply_to_update(bot, update, repos)
             offset = _get_next_offset(bot_updates)
             _save_offset(offset)
@@ -168,6 +168,14 @@ def _get_or_invalid_config(environment: tp.Mapping[str, str], key: str) -> str:
         return environment[key]
     except KeyError:
         raise InvalidConfig(f'{key} is missing from environment')
+
+
+def _get_config_or_exit() -> Config:
+    try:
+        return get_config(os.environ)
+    except InvalidConfig as exc:
+        logging.error("invalid config: %s", exc)
+        sys.exit(1)
 
 
 def get_config(environment: tp.Mapping[str, str]) -> Config:
