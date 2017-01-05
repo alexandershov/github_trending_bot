@@ -62,6 +62,10 @@ def test_github_api():
             'per_page': '1',
             'q': 'created:>2017-01-05T12:03:23',
         },
+        expected_headers={
+            'Authorization': 'token some_github_token',
+            'Accept': 'application/vnd.github.v3+json',
+        },
     )
 
 
@@ -69,11 +73,11 @@ def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
 
 
-def _assert_requests_call(call, expected_url, expected_params):
+def _assert_requests_call(call, expected_url, expected_params, expected_headers):
     parse_result = urlparse.urlparse(call.request.url)
     actual_url = f'{parse_result.scheme}://{parse_result.netloc}{parse_result.path}'
     assert actual_url == expected_url
     actual_params = _get_http_get_params(parse_result)
     assert actual_params == expected_params
-
+    assert expected_headers.items() < call.request.headers.items()  # is subset
 
