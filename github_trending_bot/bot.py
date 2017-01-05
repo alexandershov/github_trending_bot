@@ -83,9 +83,10 @@ def get_trending_repos(github_token: str) -> List[Repo]:
     headers = {
         'Authorization': f'token {github_token}',
     }
-    start_from = dt.datetime.now() - dt.timedelta(days=7)
+    start_from = dt.datetime.utcnow() - dt.timedelta(days=7)
+    start_from_str = start_from.replace(microsecond=0).isoformat()
     url = (f'https://api.github.com/search/repositories?'
-           f'sort=stars&order=desc&q=created:>{start_from:%Y-%m-%d}&per_page=10')
+           f'sort=stars&order=desc&q=created:>{start_from_str}&per_page=10')
     logging.info(
         'getting trending repositories from github, headers %r, url %r', headers, url)
     response = requests.get(url, headers=headers)
