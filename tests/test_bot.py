@@ -19,6 +19,6 @@ def test_get_config():
     # no TELEGRAM_TOKEN
     {'GITHUB_TOKEN': 'some_github_token'},
 ])
-def test_get_config_no_github_token(environment):
+def test_get_config_failure(environment):
     with pytest.raises(bot.InvalidConfig):
         bot.get_config(environment)
