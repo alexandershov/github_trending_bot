@@ -31,6 +31,7 @@ class ApiError(Error):
 class GithubApiError(ApiError):
     pass
 
+
 class Config:
     def __init__(self, github_token, telegram_token):
         self.github_token = github_token
@@ -113,6 +114,9 @@ class GithubApi:
         self.timeout = timeout
 
     def find_trending_repositories(self, created_after: dt.datetime, limit: int) -> tp.List[Repo]:
+        """
+        :raises GithubApiError:
+        """
         headers = {
             'Authorization': f'token {self.token}',
             'Accept': 'application/vnd.github.v3+json',
@@ -135,10 +139,30 @@ class GithubApi:
             response_data = response.json()
         except ValueError as exc:
             raise GithubApiError(f"can't convert {response.text!r} to json: {exc!r}")
+        if not isinstance(response_data.get('items'), list):
+            raise GithubApiError(f'github response missed `items` key: {response_data!r}')
         return [
-            Repo(name=item['name'], description=item['description'], url=item['html_url'])
+            _make_repo_from_api_item(item)
             for item in response_data['items']
             ]
+
+
+def _make_repo_from_api_item(item) -> Repo:
+    """
+    :raises GithubApiError:
+    """
+    return Repo(
+        name=_get_or_raise(item, 'name', GithubApiError),
+        description=_get_or_raise(item, 'description', GithubApiError),
+        url=_get_or_raise(item, 'html_url', GithubApiError),
+    )
+
+
+def _get_or_raise(item, key, exception_class):
+    try:
+        return item[key]
+    except KeyError:
+        raise exception_class(f'{item!r} misses required key {key!r}')
 
 
 def reply_to_update(bot: Bot, update: Update, repositories: tp.List[Repo]):
@@ -216,5 +240,3 @@ def get_config(environment: tp.Mapping[str, str]) -> Config:
         github_token=github_token,
         telegram_token=telegram_token,
     )
-
-
