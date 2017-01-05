@@ -131,10 +131,13 @@ class GithubApi:
             response.raise_for_status()
         except requests.HTTPError as exc:
             raise GithubApiError(f'got error during call to github api: {exc!r}')
-
+        try:
+            response_data = response.json()
+        except ValueError as exc:
+            raise GithubApiError(f"can't convert {response.text!r} to json: {exc!r}")
         return [
             Repo(name=item['name'], description=item['description'], url=item['html_url'])
-            for item in response.json()['items']
+            for item in response_data['items']
             ]
 
 

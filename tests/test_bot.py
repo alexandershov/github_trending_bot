@@ -76,11 +76,26 @@ def test_github_api_find_trending_repositories():
 
 
 @responses.activate
-def test_github_api_find_trending_repositories_failure():
+def test_github_api_find_trending_repositories_bad_status():
     responses.add(
         responses.GET,
         'https://api.github.com/search/repositories',
         status=400,
+    )
+    api = bot.GithubApi('some_github_token')
+    with pytest.raises(bot.GithubApiError):
+        api.find_trending_repositories(
+            created_after=dt.datetime(2017, 1, 5, 12, 3, 23, 686),
+            limit=1,
+        )
+
+
+@responses.activate
+def test_github_api_find_trending_repositories_invalid_response():
+    responses.add(
+        responses.GET,
+        'https://api.github.com/search/repositories',
+        body='not a json'
     )
     api = bot.GithubApi('some_github_token')
     with pytest.raises(bot.GithubApiError):
