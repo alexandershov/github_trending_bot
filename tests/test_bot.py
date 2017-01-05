@@ -85,4 +85,3 @@ def _assert_requests_call(call, expected_url, expected_params, expected_headers)
     actual_params = _get_http_get_params(parse_result)
     assert actual_params == expected_params
     assert expected_headers.items() < call.request.headers.items()  # is subset
-
