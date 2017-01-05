@@ -98,10 +98,10 @@ class Bot:
 
 
 class Repo:
-    def __init__(self, name: str, description: str, url: str):
+    def __init__(self, name: str, description: str, html_url: str):
         self.name = name
         self.description = description
-        self.url = url
+        self.html_url = html_url
 
 
 class GithubApi:
@@ -125,7 +125,7 @@ class GithubApi:
             'order': 'desc',
             'per_page': str(limit),
         }
-        logging.info('getting trending repositories from github: %r', url)
+        logging.info('getting trending repositories from github: %r with params %r', url, params)
         response = requests.get(url, params=params, headers=headers, timeout=self.timeout)
         try:
             response.raise_for_status()
@@ -149,7 +149,7 @@ def _make_repo_from_api_item(item) -> Repo:
     return Repo(
         name=_get_or_raise(item, 'name', str, GithubApiError),
         description=_get_or_raise(item, 'description', str, GithubApiError),
-        url=_get_or_raise(item, 'html_url', str, GithubApiError),
+        html_url=_get_or_raise(item, 'html_url', str, GithubApiError),
     )
 
 
@@ -255,6 +255,6 @@ def get_config(environment: tp.Mapping[str, str]) -> Config:
 def format_html_message(repositories: tp.List[Repo]) -> str:
     message_parts = []
     for repo in repositories:
-        part = f'<a href="{html.escape(repo.url)}">{html.escape(repo.name)}</a> - {html.escape(repo.description)}'
+        part = f'<a href="{html.escape(repo.html_url)}">{html.escape(repo.name)}</a> - {html.escape(repo.description)}'
         message_parts.append(part)
     return '\n\n'.join(message_parts)

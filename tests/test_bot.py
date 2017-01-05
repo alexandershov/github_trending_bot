@@ -68,7 +68,7 @@ def test_github_api_find_trending_repositories():
     repo = repositories[0]
     assert repo.name == 'some_name'
     assert repo.description == 'some_description'
-    assert repo.url == 'http://example.com'
+    assert repo.html_url == 'http://example.com'
 
 
 @pytest.mark.parametrize('mock_kwargs', [
@@ -116,12 +116,12 @@ def test_format_html_message():
         bot.Repo(
             name='first_name',
             description='first_description',
-            url='http://first.example.com',
+            html_url='http://first.example.com',
         ),
         bot.Repo(
             name='<&second_name>',
             description='<&second_description>',
-            url='http://\'second".example.com',
+            html_url='http://\'second".example.com',
         ),
     ]
     actual_message = bot.format_html_message(repositories)
