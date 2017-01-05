@@ -37,7 +37,7 @@ def _make_repo_item(name, description, html_url):
 
 
 @responses.activate
-def test_github_api():
+def test_github_api_find_trending_repositories():
     responses.add(
         responses.GET,
         'https://api.github.com/search/repositories',
@@ -50,7 +50,8 @@ def test_github_api():
     api = bot.GithubApi('some_github_token')
     repositories = api.find_trending_repositories(
         created_after=dt.datetime(2017, 1, 5, 12, 3, 23, 686),
-        limit=1)
+        limit=1,
+    )
     assert len(responses.calls) == 1
     call = responses.calls[0]
     _assert_requests_call(
@@ -72,6 +73,21 @@ def test_github_api():
     assert repo.name == 'some_name'
     assert repo.description == 'some_description'
     assert repo.url == 'http://example.com'
+
+
+@responses.activate
+def test_github_api_find_trending_repositories_failure():
+    responses.add(
+        responses.GET,
+        'https://api.github.com/search/repositories',
+        status=400,
+    )
+    api = bot.GithubApi('some_github_token')
+    with pytest.raises(bot.GithubApiError):
+        api.find_trending_repositories(
+            created_after=dt.datetime(2017, 1, 5, 12, 3, 23, 686),
+            limit=1,
+        )
 
 
 def _get_http_get_params(parse_result):

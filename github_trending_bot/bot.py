@@ -24,6 +24,13 @@ class InvalidConfig(Error):
     pass
 
 
+class ApiError(Error):
+    """Base exception class for api interactions."""
+
+
+class GithubApiError(ApiError):
+    pass
+
 class Config:
     def __init__(self, github_token, telegram_token):
         self.github_token = github_token
@@ -119,7 +126,11 @@ class GithubApi:
         }
         logging.info('getting trending repositories from github: %r', url)
         response = requests.get(url, params=params, headers=headers)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as exc:
+            raise GithubApiError(f'got error during call to github api: {exc!r}')
+
         return [
             Repo(name=item['name'], description=item['description'], url=item['html_url'])
             for item in response.json()['items']
@@ -201,3 +212,5 @@ def get_config(environment: tp.Mapping[str, str]) -> Config:
         github_token=github_token,
         telegram_token=telegram_token,
     )
+
+
