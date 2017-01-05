@@ -75,63 +75,37 @@ def test_github_api_find_trending_repositories():
     assert repo.url == 'http://example.com'
 
 
-@responses.activate
-def test_github_api_find_trending_repositories_bad_status():
-    responses.add(
-        responses.GET,
-        'https://api.github.com/search/repositories',
-        status=400,
-    )
-    api = bot.GithubApi('some_github_token')
-    with pytest.raises(bot.GithubApiError):
-        api.find_trending_repositories(
-            created_after=dt.datetime(2017, 1, 5, 12, 3, 23, 686),
-            limit=1,
-        )
-
-
-@responses.activate
-def test_github_api_find_trending_repositories_not_a_json():
-    responses.add(
-        responses.GET,
-        'https://api.github.com/search/repositories',
-        body='not a json'
-    )
-    api = bot.GithubApi('some_github_token')
-    with pytest.raises(bot.GithubApiError):
-        api.find_trending_repositories(
-            created_after=dt.datetime(2017, 1, 5, 12, 3, 23, 686),
-            limit=1,
-        )
-
-
-@responses.activate
-def test_github_api_find_trending_repositories_bad_item():
-    responses.add(
-        responses.GET,
-        'https://api.github.com/search/repositories',
-        json={
+@pytest.mark.parametrize('mock_kwargs', [
+    # bad status
+    {
+        'status': 400,
+    },
+    # not a json body
+    {
+        'body': 'not a json',
+    },
+    # bad item
+    {
+        'json': {
             'items': [
                 {'no': 'keys'}
             ]
+        }
+    },
+    # bad items type
+    {
+        'json': {
+            'items': 9,
         },
-    )
-    api = bot.GithubApi('some_github_token')
-    with pytest.raises(bot.GithubApiError):
-        api.find_trending_repositories(
-            created_after=dt.datetime(2017, 1, 5, 12, 3, 23, 686),
-            limit=1,
-        )
+    }
 
-
+])
 @responses.activate
-def test_github_api_find_trending_repositories_bad_items_type():
+def test_github_api_find_trending_repositories_error_handling(mock_kwargs):
     responses.add(
         responses.GET,
         'https://api.github.com/search/repositories',
-        json={
-            'items': 9,
-        },
+        **mock_kwargs
     )
     api = bot.GithubApi('some_github_token')
     with pytest.raises(bot.GithubApiError):
