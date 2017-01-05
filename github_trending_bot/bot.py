@@ -164,11 +164,7 @@ def _get_or_raise(item, key, expected_type, exception_class):
 
 
 def reply_to_update(bot: Bot, update: Update, repositories: tp.List[Repo]):
-    message_parts = []
-    for repo in repositories:
-        part = f'<a href="{repo.url}">{repo.name}</a> - {repo.description}'
-        message_parts.append(part)
-    message = '\n\n'.join(message_parts)
+    message = format_html_message(repositories)
     bot.reply(update.chat_id, update.message_id, message)
 
 
@@ -253,3 +249,11 @@ def get_config(environment: tp.Mapping[str, str]) -> Config:
         github_token=github_token,
         telegram_token=telegram_token,
     )
+
+
+def format_html_message(repositories: tp.List[Repo]) -> str:
+    message_parts = []
+    for repo in repositories:
+        part = f'<a href="{repo.url}">{repo.name}</a> - {repo.description}'
+        message_parts.append(part)
+    return '\n\n'.join(message_parts)

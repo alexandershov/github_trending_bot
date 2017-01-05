@@ -111,6 +111,18 @@ def test_github_api_find_trending_repositories_error_handling(mock_kwargs):
         )
 
 
+def test_format_html_message():
+    repositories = [
+        bot.Repo(
+            name='first_name',
+            description='first_description',
+            url='http://first.example.com',
+        ),
+    ]
+    message = bot.format_html_message(repositories)
+    assert message == '<a href="http://first.example.com">first_name</a> - first_description'
+
+
 def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
 
