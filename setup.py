@@ -13,6 +13,7 @@ setup(
     },
     tests_require=[
         'pytest==3.0.5',
+        'responses==0.5.1',
     ],
     packages=find_packages(),
 )

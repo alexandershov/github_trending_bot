@@ -112,6 +112,7 @@ def reply_to_update(bot: Bot, update: Update, repositories: tp.List[Repo]):
 def get_trending_repos(github_token: str, age_in_days: int) -> tp.List[Repo]:
     headers = {
         'Authorization': f'token {github_token}',
+        'Accept':  'application/vnd.github.v3+json',
     }
     start_from = dt.datetime.utcnow() - dt.timedelta(days=age_in_days)
     start_from_str = start_from.replace(microsecond=0).isoformat()

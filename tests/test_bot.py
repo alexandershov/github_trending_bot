@@ -1,4 +1,7 @@
+import datetime as dt
+
 import pytest
+import responses
 
 from github_trending_bot import bot
 
@@ -24,5 +27,29 @@ def test_get_config_failure(environment):
         bot.get_config(environment)
 
 
-def test_telegram_api():
-    pass
+def _make_repo_item(name, description, html_url):
+    return {
+        'name': name,
+        'description': description,
+        'html_url': html_url,
+    }
+
+
+@responses.activate
+def test_github_api():
+    responses.add(
+        responses.GET,
+        'https://api.github.com/search/repositories',
+        json={
+            'items': [
+                _make_repo_item('some_name', 'some_description', 'http://example.com')
+            ]
+        }
+    )
+    api = bot.GithubApi('some_github_token')
+    repositories = api.find_trending_repositories(
+        created_after=dt.timedelta(days=7),
+        limit=1)
+    assert len(responses.calls) == 1
+    call = responses.calls[0]
+    assert call.request.url == 'https://api.github.com/search/repositories'
