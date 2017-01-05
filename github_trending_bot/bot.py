@@ -100,10 +100,6 @@ class Repo:
         self.url = url
 
 
-def make_bot() -> Bot:
-    return Bot(os.getenv('TELEGRAM_TOKEN'))
-
-
 def reply_to_update(bot: Bot, update: Update, repositories: tp.List[Repo]):
     message_parts = []
     for repo in repositories:
