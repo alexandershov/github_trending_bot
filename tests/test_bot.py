@@ -28,14 +28,6 @@ def test_get_config_failure(environment):
         bot.get_config(environment)
 
 
-def _make_repo_item(name, description, html_url):
-    return {
-        'name': name,
-        'description': description,
-        'html_url': html_url,
-    }
-
-
 @responses.activate
 def test_github_api_find_trending_repositories():
     responses.add(
@@ -43,7 +35,11 @@ def test_github_api_find_trending_repositories():
         'https://api.github.com/search/repositories',
         json={
             'items': [
-                _make_repo_item('some_name', 'some_description', 'http://example.com'),
+                {
+                    'name': 'some_name',
+                    'description': 'some_description',
+                    'html_url': 'http://example.com',
+                }
             ]
         }
     )
