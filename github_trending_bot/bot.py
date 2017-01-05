@@ -205,17 +205,24 @@ def main():
     _configure_logging()
     config = _get_config_or_exit(os.environ)
     bot = Bot(config.telegram_token)
+    telegram_api = TelegramApi(config.telegram_token)
     offset = _read_offset()
     while True:
         bot_updates = bot.get_updates(offset=offset, limit=5, timeout=1000)
         if bot_updates:
             for update in bot_updates:
                 try:
-                    repos = find_trending_repositories(config.github_token, update.age_in_days)
+                    repositories = find_trending_repositories(config.github_token, update.age_in_days)
                 except GithubApiError as exc:
                     logging.error(f'got an error during call to github api: {exc!r}')
                     break
-                reply_to_update(bot, update, repos)
+                telegram_api.send_message(
+                    chat_id=update.chat_id,
+                    text=format_html_message(repositories),
+                    parse_mode='HTML',
+                    disable_web_page_preview=True,
+                    disable_notification=True,
+                )
             offset = _get_next_offset(bot_updates)
             _save_offset(offset)
 
@@ -278,7 +285,7 @@ class TelegramApi:
         self.timeout = timeout
 
     def send_message(
-        self, chat_id: str, text: str, parse_mode: str = '',
+        self, chat_id: int, text: str, parse_mode: str = '',
         disable_web_page_preview: bool = False, disable_notification: bool = False):
         if not text:
             return

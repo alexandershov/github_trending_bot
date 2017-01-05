@@ -177,6 +177,35 @@ def test_telegram_api_send_message_bad_status():
         )
 
 
+@responses.activate
+def test_telegram_api_get_updates():
+    responses.add(
+        responses.POST,
+        'https://api.telegram.org/botsome_telegram_token/getUpdates',
+    )
+    api = bot.TelegramApi('some_telegram_token')
+    updates = api.get_updates(
+        chat_id=99,
+        text='<b>some_text</b>',
+        parse_mode='HTML',
+        disable_web_page_preview=True,
+        disable_notification=True,
+    )
+    assert (len(responses.calls) == 1)
+    call = responses.calls[0]
+    _assert_requests_call(
+        call,
+        expected_url='https://api.telegram.org/botsome_telegram_token/sendMessage',
+        expected_json_payload={
+            'chat_id': 99,
+            'text': '<b>some_text</b>',
+            'parse_mode': 'HTML',
+            'disable_web_page_preview': True,
+            'disable_notification': True,
+        }
+    )
+
+
 def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
 
