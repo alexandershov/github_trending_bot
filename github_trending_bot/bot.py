@@ -110,12 +110,15 @@ class GithubApi:
             'Accept': 'application/vnd.github.v3+json',
         }
         created_after_str = created_after.replace(microsecond=0).isoformat()
-        url = (f'https://api.github.com/search/repositories?'
-               f'sort=stars&order=desc&q=created:>{created_after_str}&per_page={limit}'
-               )
+        url = 'https://api.github.com/search/repositories'
+        params = {
+            'q': f'created:>{created_after_str}',
+            'sort': 'stars',
+            'order': 'desc',
+            'per_page': str(limit),
+        }
         logging.info('getting trending repositories from github: %r', url)
-
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, params=params, headers=headers)
         response.raise_for_status()
         return [
             Repo(name=item['name'], description=item['description'], url=item['html_url'])
