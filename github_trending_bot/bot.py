@@ -132,7 +132,7 @@ def get_trending_repos(github_token: str, age_in_days: int) -> tp.List[Repo]:
 
 
 def main():
-    config = _get_config_or_exit()
+    config = _get_config_or_exit(os.environ)
     bot = Bot(config.telegram_token)
     offset = _read_offset()
     while True:
@@ -170,9 +170,9 @@ def _get_or_invalid_config(environment: tp.Mapping[str, str], key: str) -> str:
         raise InvalidConfig(f'{key} is missing from environment')
 
 
-def _get_config_or_exit() -> Config:
+def _get_config_or_exit(environment: tp.Mapping[str, str]) -> Config:
     try:
-        return get_config(os.environ)
+        return get_config(environment)
     except InvalidConfig as exc:
         logging.error("invalid config: %s", exc)
         sys.exit(1)

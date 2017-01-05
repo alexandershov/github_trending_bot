@@ -22,3 +22,7 @@ def test_get_config():
 def test_get_config_failure(environment):
     with pytest.raises(bot.InvalidConfig):
         bot.get_config(environment)
+
+
+def test_telegram_api():
+    pass
