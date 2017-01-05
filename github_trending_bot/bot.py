@@ -6,7 +6,7 @@ import typing as tp
 import requests
 
 
-# TODO: refactoring & tests, /help, /start, error handling
+# TODO: refactoring & tests, /help, /start, error handling, github caching
 
 PATH = '/tmp/github_trending_last_update'
 
