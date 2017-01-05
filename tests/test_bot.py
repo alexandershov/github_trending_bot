@@ -42,14 +42,14 @@ def test_github_api():
         'https://api.github.com/search/repositories',
         json={
             'items': [
-                _make_repo_item('some_name', 'some_description', 'http://example.com')
+                _make_repo_item('some_name', 'some_description', 'http://example.com'),
             ]
         }
     )
     api = bot.GithubApi('some_github_token')
     repositories = api.find_trending_repositories(
-        created_after=dt.timedelta(days=7),
+        created_after=dt.datetime(2017, 1, 5, 12, 3, 23, 686),
         limit=1)
     assert len(responses.calls) == 1
     call = responses.calls[0]
-    assert call.request.url == 'https://api.github.com/search/repositories'
+    assert call.request.path_url == 'https://api.github.com/search/repositories'

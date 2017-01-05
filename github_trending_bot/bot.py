@@ -100,6 +100,29 @@ class Repo:
         self.url = url
 
 
+class GithubApi:
+    def __init__(self, token: str) -> None:
+        self.token = token
+
+    def find_trending_repositories(self, created_after: dt.datetime, limit: int) -> tp.List[Repo]:
+        headers = {
+            'Authorization': f'token {self.token}',
+            'Accept': 'application/vnd.github.v3+json',
+        }
+        created_after_str = created_after.replace(microsecond=0).isoformat()
+        url = (f'https://api.github.com/search/repositories?'
+               f'sort=stars&order=desc&q=created:>{created_after_str}&per_page={limit}'
+               )
+        logging.info('getting trending repositories from github: %r', url)
+
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        return [
+            Repo(name=item['name'], description=item['description'], url=item['html_url'])
+            for item in response.json()['items']
+            ]
+
+
 def reply_to_update(bot: Bot, update: Update, repositories: tp.List[Repo]):
     message_parts = []
     for repo in repositories:
@@ -110,22 +133,12 @@ def reply_to_update(bot: Bot, update: Update, repositories: tp.List[Repo]):
 
 
 def get_trending_repos(github_token: str, age_in_days: int) -> tp.List[Repo]:
-    headers = {
-        'Authorization': f'token {github_token}',
-        'Accept':  'application/vnd.github.v3+json',
-    }
-    start_from = dt.datetime.utcnow() - dt.timedelta(days=age_in_days)
-    start_from_str = start_from.replace(microsecond=0).isoformat()
-    url = (f'https://api.github.com/search/repositories?'
-           f'sort=stars&order=desc&q=created:>{start_from_str}&per_page=10')
-    logging.info(
-        'getting trending repositories from github, headers %r, url %r', headers, url)
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    return [
-        Repo(name=item['name'], description=item['description'], url=item['html_url'])
-        for item in response.json()['items']
-        ]
+    created_after = dt.datetime.utcnow() - dt.timedelta(days=age_in_days)
+    github_api = GithubApi(github_token)
+    return github_api.find_trending_repositories(
+        created_after=created_after,
+        limit=10,
+    )
 
 
 def main():
