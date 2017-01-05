@@ -173,6 +173,9 @@ def reply_to_update(bot: Bot, update: Update, repositories: tp.List[Repo]):
 
 
 def find_trending_repositories(github_token: str, age_in_days: int) -> tp.List[Repo]:
+    """
+    :raises GithubApiError:
+    """
     created_after = dt.datetime.utcnow() - dt.timedelta(days=age_in_days)
     github_api = GithubApi(github_token)
     return github_api.find_trending_repositories(
@@ -198,7 +201,11 @@ def main():
         if bot_updates:
             for update in bot_updates:
                 # TODO: use caching
-                repos = find_trending_repositories(config.github_token, update.age_in_days)
+                try:
+                    repos = find_trending_repositories(config.github_token, update.age_in_days)
+                except GithubApiError as exc:
+                    logging.error(f'got an error during call to github api: {exc!r}')
+                    break
                 reply_to_update(bot, update, repos)
             offset = _get_next_offset(bot_updates)
             _save_offset(offset)
