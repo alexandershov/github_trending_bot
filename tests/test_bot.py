@@ -1,4 +1,5 @@
 import datetime as dt
+import json
 import urllib.parse as urlparse
 
 import pytest
@@ -140,17 +141,24 @@ def test_telegram_api_send_message():
     )
     api = bot.TelegramApi('some_telegram_token')
     api.send_message(
-        chat_id='some_chat_id',
+        chat_id=99,
         text='<b>some_text</b>',
         parse_mode='HTML',
         disable_web_page_preview=True,
         disable_notification=True,
     )
-    assert(len(responses.calls) == 1)
+    assert (len(responses.calls) == 1)
     call = responses.calls[0]
     _assert_requests_call(
         call,
         expected_url='https://api.telegram.org/botsome_telegram_token/sendMessage',
+        expected_json_payload={
+            'chat_id': 99,
+            'text': '<b>some_text</b>',
+            'parse_mode': 'HTML',
+            'disable_web_page_preview': True,
+            'disable_notification': True,
+        }
     )
 
 
@@ -158,7 +166,8 @@ def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
 
 
-def _assert_requests_call(call, expected_url=None, expected_params=None, expected_headers=None):
+def _assert_requests_call(
+    call, expected_url=None, expected_params=None, expected_headers=None, expected_json_payload=None):
     parse_result = urlparse.urlparse(call.request.url)
     if expected_url is not None:
         actual_url = f'{parse_result.scheme}://{parse_result.netloc}{parse_result.path}'
@@ -168,3 +177,6 @@ def _assert_requests_call(call, expected_url=None, expected_params=None, expecte
         assert actual_params == expected_params
     if expected_headers is not None:
         assert expected_headers.items() < call.request.headers.items()  # is subset
+    if expected_json_payload is not None:
+        actual_json_payload = json.loads(call.request.body)
+        assert actual_json_payload == expected_json_payload
