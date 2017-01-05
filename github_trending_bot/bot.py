@@ -108,8 +108,9 @@ class Repo:
 
 
 class GithubApi:
-    def __init__(self, token: str) -> None:
+    def __init__(self, token: str, timeout=10) -> None:
         self.token = token
+        self.timeout = timeout
 
     def find_trending_repositories(self, created_after: dt.datetime, limit: int) -> tp.List[Repo]:
         headers = {
@@ -125,7 +126,7 @@ class GithubApi:
             'per_page': str(limit),
         }
         logging.info('getting trending repositories from github: %r', url)
-        response = requests.get(url, params=params, headers=headers)
+        response = requests.get(url, params=params, headers=headers, timeout=self.timeout)
         try:
             response.raise_for_status()
         except requests.HTTPError as exc:
