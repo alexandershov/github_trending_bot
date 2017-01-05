@@ -1,7 +1,7 @@
-from typing import List
 import datetime as dt
 import logging
 import os
+import typing as tp
 
 import requests
 
@@ -36,7 +36,7 @@ class Bot:
         assert telegram_token
         self.telegram_token = telegram_token
 
-    def get_updates(self, offset: int, limit: int, timeout: int) -> List[Update]:
+    def get_updates(self, offset: int, limit: int, timeout: int) -> tp.List[Update]:
         url = f'https://api.telegram.org/bot{self.telegram_token}/getUpdates'
         params = dict(
             offset=offset,
@@ -85,7 +85,7 @@ def make_bot() -> Bot:
     return Bot(os.getenv('TELEGRAM_TOKEN'))
 
 
-def reply_to_update(bot: Bot, update: Update, repositories: List[Repo]):
+def reply_to_update(bot: Bot, update: Update, repositories: tp.List[Repo]):
     message_parts = []
     for repo in repositories:
         part = f'<a href="{repo.url}">{repo.name}</a> - {repo.description}'
@@ -94,7 +94,7 @@ def reply_to_update(bot: Bot, update: Update, repositories: List[Repo]):
     bot.reply(update.chat_id, update.message_id, message)
 
 
-def get_trending_repos(github_token: str, age_in_days: int) -> List[Repo]:
+def get_trending_repos(github_token: str, age_in_days: int) -> tp.List[Repo]:
     headers = {
         'Authorization': f'token {github_token}',
     }
@@ -128,7 +128,7 @@ def main():
             _save_offset(offset)
 
 
-def _get_next_offset(bot_updates: List[Update]) -> int:
+def _get_next_offset(bot_updates: tp.List[Update]) -> int:
     return max(update.telegram_id for update in bot_updates) + 1
 
 
