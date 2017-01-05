@@ -132,17 +132,39 @@ def test_format_html_message():
     assert actual_message == expected_message
 
 
-def test_telegram_api
+@responses.activate
+def test_telegram_api_send_message():
+    responses.add(
+        responses.POST,
+        'https://api.telegram.org/botsome_telegram_token/sendMessage',
+    )
+    api = bot.TelegramApi('some_telegram_token')
+    api.send_message(
+        chat_id='some_chat_id',
+        text='<b>some_text</b>',
+        parse_mode='HTML',
+        disable_web_page_preview=True,
+        disable_notification=True,
+    )
+    assert(len(responses.calls) == 1)
+    call = responses.calls[0]
+    _assert_requests_call(
+        call,
+        expected_url='https://api.telegram.org/botsome_telegram_token/sendMessage',
+    )
 
 
 def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
 
 
-def _assert_requests_call(call, expected_url, expected_params, expected_headers):
+def _assert_requests_call(call, expected_url=None, expected_params=None, expected_headers=None):
     parse_result = urlparse.urlparse(call.request.url)
-    actual_url = f'{parse_result.scheme}://{parse_result.netloc}{parse_result.path}'
-    assert actual_url == expected_url
-    actual_params = _get_http_get_params(parse_result)
-    assert actual_params == expected_params
-    assert expected_headers.items() < call.request.headers.items()  # is subset
+    if expected_url is not None:
+        actual_url = f'{parse_result.scheme}://{parse_result.netloc}{parse_result.path}'
+        assert actual_url == expected_url
+    if expected_params is not None:
+        actual_params = _get_http_get_params(parse_result)
+        assert actual_params == expected_params
+    if expected_headers is not None:
+        assert expected_headers.items() < call.request.headers.items()  # is subset

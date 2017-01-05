@@ -17,6 +17,7 @@ import requests
 # TODO: remove magic constants
 
 PATH = '/tmp/github_trending_last_update'
+DEFAULT_API_TIMEOUT = 5
 
 
 class Error(Exception):
@@ -112,7 +113,7 @@ class Repo:
 
 
 class GithubApi:
-    def __init__(self, token: str, timeout=5) -> None:
+    def __init__(self, token: str, timeout=DEFAULT_API_TIMEOUT) -> None:
         self.token = token
         self.timeout = timeout
 
@@ -264,3 +265,28 @@ def format_html_message(repositories: tp.List[Repo]) -> str:
         part = f'<a href="{html.escape(repo.html_url)}">{html.escape(repo.name)}</a> - {html.escape(repo.description)}'
         message_parts.append(part)
     return '\n\n'.join(message_parts)
+
+
+class TelegramApi:
+    def __init__(self, token: str, timeout: int = DEFAULT_API_TIMEOUT) -> None:
+        self.token = token
+        self.timeout = timeout
+
+    def send_message(
+        self, chat_id: str, text: str, parse_mode: str = '',
+        disable_web_page_preview: bool = False, disable_notification: bool = False):
+        if not text:
+            return
+        url = f'https://api.telegram.org/bot{self.token}/sendMessage'
+        params = {
+            'chat_id': chat_id,
+            'text': text,
+            'disable_web_page_preview': disable_web_page_preview,
+            'disable_notification': disable_notification,
+        }
+        if parse_mode:
+            params['parse_mode'] = parse_mode
+
+        logging.info('sending message to chat_id %s with params %r', chat_id, params)
+        response = requests.post(url, json=params, timeout=self.timeout)
+        # response.raise_for_status()
