@@ -162,6 +162,21 @@ def test_telegram_api_send_message():
     )
 
 
+@responses.activate
+def test_telegram_api_send_message_bad_status():
+    responses.add(
+        responses.POST,
+        'https://api.telegram.org/botsome_telegram_token/sendMessage',
+        status=400,
+    )
+    api = bot.TelegramApi('some_telegram_token')
+    with pytest.raises(bot.TelegramApiError):
+        api.send_message(
+            chat_id=99,
+            text='<b>some_text</b>',
+        )
+
+
 def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
 

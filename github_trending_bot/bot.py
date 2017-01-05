@@ -36,6 +36,10 @@ class GithubApiError(ApiError):
     pass
 
 
+class TelegramApiError(ApiError):
+    pass
+
+
 class Config:
     def __init__(self, github_token, telegram_token):
         self.github_token = github_token
@@ -289,4 +293,7 @@ class TelegramApi:
 
         logging.info('sending message to chat_id %s with params %r', chat_id, params)
         response = requests.post(url, json=params, timeout=self.timeout)
-        # response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as exc:
+            raise TelegramApiError(f'got error during call to telegram api: {exc!r}')
