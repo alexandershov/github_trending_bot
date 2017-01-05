@@ -108,7 +108,7 @@ class Repo:
 
 
 class GithubApi:
-    def __init__(self, token: str, timeout=10) -> None:
+    def __init__(self, token: str, timeout=5) -> None:
         self.token = token
         self.timeout = timeout
 
