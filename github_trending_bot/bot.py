@@ -8,7 +8,7 @@ import requests
 PATH = '/tmp/github_trending_last_update'
 
 logging.basicConfig(
-    format='%(asctime)-15s %(levelname)s %(filename)s:%(lineno)s %(message)s',
+    format='%(levelname)s %(message)s %(filename)s:%(lineno)s',
     level=logging.INFO,
 )
 
@@ -90,7 +90,7 @@ def reply_to_update(bot: Bot, update: Update, repositories: List[Repo]):
     for repo in repositories:
         part = f'<a href="{repo.url}">{repo.name}</a> - {repo.description}'
         message_parts.append(part)
-    message = '\n'.join(message_parts)
+    message = '\n\n'.join(message_parts)
     bot.reply(update.chat_id, update.message_id, message)
 
 
