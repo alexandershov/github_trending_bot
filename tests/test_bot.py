@@ -119,15 +119,15 @@ def test_format_html_message():
             url='http://first.example.com',
         ),
         bot.Repo(
-            name='second_name',
-            description='second_description',
+            name='<&second_name>',
+            description='<&second_description>',
             url='http://second.example.com',
         ),
     ]
     actual_message = bot.format_html_message(repositories)
     expected_message = (
         '<a href="http://first.example.com">first_name</a> - first_description\n\n'
-        '<a href="http://second.example.com">second_name</a> - second_description'
+        '<a href="http://second.example.com">&lt;&amp;second_name&gt;</a> - &lt;&amp;second_description&gt;'
     )
     assert actual_message == expected_message
 
