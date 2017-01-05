@@ -1,4 +1,5 @@
 import datetime as dt
+import urllib.parse as urlparse
 
 import pytest
 import responses
@@ -52,4 +53,13 @@ def test_github_api():
         limit=1)
     assert len(responses.calls) == 1
     call = responses.calls[0]
-    assert call.request.path_url == 'https://api.github.com/search/repositories'
+    _assert_requests_call(
+        call,
+        expected_url='https://api.github.com/search/repositories',
+    )
+
+
+def _assert_requests_call(call, expected_url):
+    parse_result = urlparse.urlparse(call.request.url)
+    actual_url = f'{parse_result.scheme}://{parse_result.netloc}{parse_result.path}'
+    assert actual_url == expected_url

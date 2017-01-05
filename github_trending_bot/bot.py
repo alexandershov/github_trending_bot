@@ -132,7 +132,7 @@ def reply_to_update(bot: Bot, update: Update, repositories: tp.List[Repo]):
     bot.reply(update.chat_id, update.message_id, message)
 
 
-def get_trending_repos(github_token: str, age_in_days: int) -> tp.List[Repo]:
+def find_trending_repositories(github_token: str, age_in_days: int) -> tp.List[Repo]:
     created_after = dt.datetime.utcnow() - dt.timedelta(days=age_in_days)
     github_api = GithubApi(github_token)
     return github_api.find_trending_repositories(
@@ -150,7 +150,7 @@ def main():
         if bot_updates:
             for update in bot_updates:
                 # TODO: use caching
-                repos = get_trending_repos(config.github_token, update.age_in_days)
+                repos = find_trending_repositories(config.github_token, update.age_in_days)
                 reply_to_update(bot, update, repos)
             offset = _get_next_offset(bot_updates)
             _save_offset(offset)
