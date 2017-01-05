@@ -10,11 +10,6 @@ import requests
 
 PATH = '/tmp/github_trending_last_update'
 
-logging.basicConfig(
-    format='%(levelname)s %(message)s %(filename)s:%(lineno)s',
-    level=logging.INFO,
-)
-
 
 class Error(Exception):
     """Base exception class."""
@@ -139,11 +134,10 @@ class GithubApi:
             response_data = response.json()
         except ValueError as exc:
             raise GithubApiError(f"can't convert {response.text!r} to json: {exc!r}")
-        if not isinstance(response_data.get('items'), list):
-            raise GithubApiError(f'github response missed `items` key: {response_data!r}')
+        items = _get_or_raise(response_data, 'items', list, GithubApiError)
         return [
-            _make_repo_from_api_item(item)
-            for item in response_data['items']
+            _make_repo_from_api_item(one_item)
+            for one_item in items
             ]
 
 
@@ -187,7 +181,15 @@ def find_trending_repositories(github_token: str, age_in_days: int) -> tp.List[R
     )
 
 
+def _configure_logging():
+    logging.basicConfig(
+        format='%(levelname)s %(message)s %(filename)s:%(lineno)s',
+        level=logging.INFO,
+    )
+
+
 def main():
+    _configure_logging()
     config = _get_config_or_exit(os.environ)
     bot = Bot(config.telegram_token)
     offset = _read_offset()
