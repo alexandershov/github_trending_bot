@@ -5,7 +5,6 @@ import typing as tp
 
 import requests
 
-
 # TODO: refactoring & tests, /help, /start, error handling, github caching
 
 PATH = '/tmp/github_trending_last_update'
@@ -14,6 +13,20 @@ logging.basicConfig(
     format='%(levelname)s %(message)s %(filename)s:%(lineno)s',
     level=logging.INFO,
 )
+
+
+class Error(Exception):
+    """Base exception class."""
+
+
+class InvalidConfig(Error):
+    pass
+
+
+class Config:
+    def __init__(self, github_token, telegram_token):
+        self.github_token = github_token
+        self.telegram_token = telegram_token
 
 
 class Update:
@@ -145,3 +158,14 @@ def _read_offset() -> int:
 def _save_offset(offset: int):
     with open(PATH, 'w') as fileobj:
         fileobj.write(str(offset))
+
+
+def get_config(environment: tp.Mapping[str, str]) -> Config:
+    github_token = environment.get('GITHUB_TOKEN')
+    if github_token is None:
+        raise InvalidConfig('GITHUB_TOKEN is missing')
+    telegram_token = environment.get('TELEGRAM_TOKEN')
+    return Config(
+        github_token=github_token,
+        telegram_token=telegram_token,
+    )
