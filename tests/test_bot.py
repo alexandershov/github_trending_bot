@@ -19,3 +19,11 @@ def test_get_config_no_github_token():
     }
     with pytest.raises(bot.InvalidConfig):
         bot.get_config(environment)
+
+
+def test_get_config_no_telegram_token():
+    environment = {
+        'GITHUB_TOKEN': 'some_github_token',
+    }
+    with pytest.raises(bot.InvalidConfig):
+        bot.get_config(environment)

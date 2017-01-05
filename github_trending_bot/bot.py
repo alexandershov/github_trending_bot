@@ -165,6 +165,8 @@ def get_config(environment: tp.Mapping[str, str]) -> Config:
     if github_token is None:
         raise InvalidConfig('GITHUB_TOKEN is missing')
     telegram_token = environment.get('TELEGRAM_TOKEN')
+    if telegram_token is None:
+        raise InvalidConfig('TELEGRAM_TOKEN is missing')
     return Config(
         github_token=github_token,
         telegram_token=telegram_token,
