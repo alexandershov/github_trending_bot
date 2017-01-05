@@ -5,6 +5,9 @@ import typing as tp
 
 import requests
 
+
+# TODO: refactoring & tests, /help, /start, error handling
+
 PATH = '/tmp/github_trending_last_update'
 
 logging.basicConfig(
@@ -68,6 +71,8 @@ class Bot:
             chat_id=chat_id,
             text=text,
             parse_mode='HTML',
+            disable_web_page_preview=True,
+            disable_notification=True,
         )
         logging.info('sending reply to %s with params %r', chat_id, params)
         response = requests.post(url, json=params)
