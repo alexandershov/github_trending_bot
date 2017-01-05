@@ -13,17 +13,12 @@ def test_get_config():
     assert config.telegram_token == 'some_telegram_token'
 
 
-def test_get_config_no_github_token():
-    environment = {
-        'TELEGRAM_TOKEN': 'some_telegram_token',
-    }
-    with pytest.raises(bot.InvalidConfig):
-        bot.get_config(environment)
-
-
-def test_get_config_no_telegram_token():
-    environment = {
-        'GITHUB_TOKEN': 'some_github_token',
-    }
+@pytest.mark.parametrize('environment', [
+    # no GITHUB_TOKEN
+    {'TELEGRAM_TOKEN': 'some_telegram_token'},
+    # no TELEGRAM_TOKEN
+    {'GITHUB_TOKEN': 'some_github_token'},
+])
+def test_get_config_no_github_token(environment):
     with pytest.raises(bot.InvalidConfig):
         bot.get_config(environment)
