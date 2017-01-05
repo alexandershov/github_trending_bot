@@ -56,10 +56,24 @@ def test_github_api():
     _assert_requests_call(
         call,
         expected_url='https://api.github.com/search/repositories',
+        expected_params={
+            'sort': 'stars',
+            'order': 'desc',
+            'per_page': '1',
+            'q': 'created:>2017-01-05T12:03:23',
+        },
     )
 
 
-def _assert_requests_call(call, expected_url):
+def _get_http_get_params(parse_result):
+    return dict(urlparse.parse_qsl(parse_result.query))
+
+
+def _assert_requests_call(call, expected_url, expected_params):
     parse_result = urlparse.urlparse(call.request.url)
     actual_url = f'{parse_result.scheme}://{parse_result.netloc}{parse_result.path}'
     assert actual_url == expected_url
+    actual_params = _get_http_get_params(parse_result)
+    assert actual_params == expected_params
+
+
