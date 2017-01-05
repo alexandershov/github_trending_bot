@@ -132,6 +132,9 @@ def test_format_html_message():
     assert actual_message == expected_message
 
 
+def test_telegram_api
+
+
 def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
 

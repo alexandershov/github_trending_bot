@@ -7,7 +7,14 @@ import typing as tp
 
 import requests
 
-# TODO: refactoring & tests, /help, /start, error handling, github caching
+# TODO: tests
+# TODO: refactoring
+# TODO: /help
+# TODO: /start
+# TODO error handling
+# TODO: github caching
+# TODO: integration test
+# TODO: remove magic constants
 
 PATH = '/tmp/github_trending_last_update'
 
@@ -197,7 +204,6 @@ def main():
         bot_updates = bot.get_updates(offset=offset, limit=5, timeout=1000)
         if bot_updates:
             for update in bot_updates:
-                # TODO: use caching
                 try:
                     repos = find_trending_repositories(config.github_token, update.age_in_days)
                 except GithubApiError as exc:
