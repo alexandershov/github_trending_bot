@@ -118,9 +118,18 @@ def test_format_html_message():
             description='first_description',
             url='http://first.example.com',
         ),
+        bot.Repo(
+            name='second_name',
+            description='second_description',
+            url='http://second.example.com',
+        ),
     ]
-    message = bot.format_html_message(repositories)
-    assert message == '<a href="http://first.example.com">first_name</a> - first_description'
+    actual_message = bot.format_html_message(repositories)
+    expected_message = (
+        '<a href="http://first.example.com">first_name</a> - first_description\n\n'
+        '<a href="http://second.example.com">second_name</a> - second_description'
+    )
+    assert actual_message == expected_message
 
 
 def _get_http_get_params(parse_result):
