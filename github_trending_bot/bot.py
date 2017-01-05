@@ -46,6 +46,7 @@ class Bot:
         logging.info('getting updates from telegram ...')
         response = requests.post(url, json=params)
         response.raise_for_status()
+        logging.info('got response %s', response.json())
         updates = [
             Update(
                 telegram_id=item['update_id'],
@@ -54,12 +55,14 @@ class Bot:
                 age_in_days=_get_age_in_days(item),
             )
             for item in response.json()['result']
-            if item['message']['text'].startswith('/show')
+            if item.get('message', {}).get('text', '').startswith('/show')
             ]
         logging.info('got %d updates from telegram', len(updates))
         return updates
 
     def reply(self, chat_id, message_id, text):
+        if not text:
+            return
         url = f'https://api.telegram.org/bot{self.telegram_token}/sendMessage'
         params = dict(
             chat_id=chat_id,
