@@ -14,10 +14,21 @@ logging.basicConfig(
 
 
 class Update:
-    def __init__(self, telegram_id: int, chat_id: int, message_id: int):
+    def __init__(self, telegram_id: int, chat_id: int, message_id: int, age_in_days: int):
         self.telegram_id = telegram_id
         self.chat_id = chat_id
         self.message_id = message_id
+        self.age_in_days = age_in_days
+
+
+def _get_age_in_days(item):
+    command, *args = item['message']['text'].split()
+    if len(args) != 1:
+        return 7
+    try:
+        return int(args[0])
+    except ValueError:
+        return 7
 
 
 class Bot:
@@ -40,9 +51,10 @@ class Bot:
                 telegram_id=item['update_id'],
                 chat_id=item['message']['chat']['id'],
                 message_id=item['message']['message_id'],
+                age_in_days=_get_age_in_days(item),
             )
             for item in response.json()['result']
-            if item['message']['text'] == '/show'
+            if item['message']['text'].startswith('/show')
             ]
         logging.info('got %d updates from telegram', len(updates))
         return updates
@@ -79,11 +91,11 @@ def reply_to_update(bot: Bot, update: Update, repositories: List[Repo]):
     bot.reply(update.chat_id, update.message_id, message)
 
 
-def get_trending_repos(github_token: str) -> List[Repo]:
+def get_trending_repos(github_token: str, age_in_days: int) -> List[Repo]:
     headers = {
         'Authorization': f'token {github_token}',
     }
-    start_from = dt.datetime.utcnow() - dt.timedelta(days=7)
+    start_from = dt.datetime.utcnow() - dt.timedelta(days=age_in_days)
     start_from_str = start_from.replace(microsecond=0).isoformat()
     url = (f'https://api.github.com/search/repositories?'
            f'sort=stars&order=desc&q=created:>{start_from_str}&per_page=10')
@@ -105,8 +117,9 @@ def main():
     while True:
         bot_updates = bot.get_updates(offset=offset, limit=5, timeout=1000)
         if bot_updates:
-            repos = get_trending_repos(github_token)
             for update in bot_updates:
+                # TODO: use caching
+                repos = get_trending_repos(github_token, update.age_in_days)
                 reply_to_update(bot, update, repos)
             offset = _get_next_offset(bot_updates)
             _save_offset(offset)
