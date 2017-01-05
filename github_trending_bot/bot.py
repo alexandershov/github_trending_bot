@@ -160,13 +160,22 @@ def _save_offset(offset: int):
         fileobj.write(str(offset))
 
 
+def _get_or_invalid_config(environment: tp.Mapping[str, str], key: str) -> str:
+    """
+    :raises InvalidConfig: When `key` is missing from `environment`.
+    """
+    try:
+        return environment[key]
+    except KeyError:
+        raise InvalidConfig(f'{key} is missing from environment')
+
+
 def get_config(environment: tp.Mapping[str, str]) -> Config:
-    github_token = environment.get('GITHUB_TOKEN')
-    if github_token is None:
-        raise InvalidConfig('GITHUB_TOKEN is missing')
-    telegram_token = environment.get('TELEGRAM_TOKEN')
-    if telegram_token is None:
-        raise InvalidConfig('TELEGRAM_TOKEN is missing')
+    """
+    :raises InvalidConfig: When either 'GITHUB_TOKEN' or 'TELEGRAM_TOKEN' are missing
+    """
+    github_token = _get_or_invalid_config(environment, 'GITHUB_TOKEN')
+    telegram_token = _get_or_invalid_config(environment, 'TELEGRAM_TOKEN')
     return Config(
         github_token=github_token,
         telegram_token=telegram_token,
