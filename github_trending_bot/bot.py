@@ -255,6 +255,6 @@ def get_config(environment: tp.Mapping[str, str]) -> Config:
 def format_html_message(repositories: tp.List[Repo]) -> str:
     message_parts = []
     for repo in repositories:
-        part = f'<a href="{repo.url}">{html.escape(repo.name)}</a> - {html.escape(repo.description)}'
+        part = f'<a href="{html.escape(repo.url)}">{html.escape(repo.name)}</a> - {html.escape(repo.description)}'
         message_parts.append(part)
     return '\n\n'.join(message_parts)
