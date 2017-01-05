@@ -152,17 +152,21 @@ def _make_repo_from_api_item(item) -> Repo:
     :raises GithubApiError:
     """
     return Repo(
-        name=_get_or_raise(item, 'name', GithubApiError),
-        description=_get_or_raise(item, 'description', GithubApiError),
-        url=_get_or_raise(item, 'html_url', GithubApiError),
+        name=_get_or_raise(item, 'name', str, GithubApiError),
+        description=_get_or_raise(item, 'description', str, GithubApiError),
+        url=_get_or_raise(item, 'html_url', str, GithubApiError),
     )
 
 
-def _get_or_raise(item, key, exception_class):
+def _get_or_raise(item, key, expected_type, exception_class):
     try:
-        return item[key]
+        value = item[key]
     except KeyError:
         raise exception_class(f'{item!r} misses required key {key!r}')
+    else:
+        if not isinstance(value, expected_type):
+            raise exception_class(f'key {key!r} should be {expected_type}, got {value!r} instead')
+        return value
 
 
 def reply_to_update(bot: Bot, update: Update, repositories: tp.List[Repo]):
