@@ -14,12 +14,12 @@ import requests
 # TODO: refactoring
 # TODO: remove magic constants
 
-
 OFFSET_PATH = '/tmp/github_trending_last_update'
 DEFAULT_GITHUB_API_TIMEOUT = 5  # seconds
 DEFAULT_TELEGRAM_API_TIMEOUT = 60  # seconds
-GITHUB_CACHE_TTL = 60  # seconds
+GITHUB_CACHE_TTL = 600  # seconds
 DEFAULT_AGE_IN_DAYS = 7
+TELEGRAM_UPDATES_LIMIT = 5  # items in an array
 HELP_TEXT = '/show [DAYS] - show trending repositories created in the last DAYS'
 
 
@@ -75,6 +75,52 @@ class Repo:
         self.name = name
         self.description = description
         self.html_url = html_url
+
+
+class ParsedMessage:
+    def __init__(self, name, args):
+        self.name = name
+        self.args = args
+
+    def __repr__(self):
+        return f'ParsedMessage(name={self.name!r}, args={self.args!r})'
+
+
+class CommandsExecutor:
+    def __init__(self, commands_by_name: tp.Mapping) -> None:
+        self.commands_by_name = commands_by_name
+
+    def execute(self, parsed_message: ParsedMessage) -> str:
+        try:
+            command = self.commands_by_name[parsed_message.name]
+        except KeyError:
+            raise InvalidCommand(f'unknown command {parsed_message.name}, type `/help`')
+        else:
+            return command(parsed_message.args)
+
+
+class GithubShowCommand:
+    def __init__(self, token, default_age_in_days=DEFAULT_AGE_IN_DAYS):
+        self.token = token
+        self.default_age_in_days = default_age_in_days
+
+    def __call__(self, args):
+        """
+        :raises GithubApiError:
+        """
+        age_in_days = self._get_age_in_days_or_invalid_args(args)
+        repositories = find_trending_repositories(self.token, age_in_days)
+        return format_html_message(repositories)
+
+    def _get_age_in_days_or_invalid_args(self, args):
+        if not args:
+            return self.default_age_in_days
+        if len(args) != 1:
+            raise InvalidCommand(f'this command accepts only one argument, got {len(args)}')
+        try:
+            return int(args[0])
+        except ValueError:
+            raise InvalidCommand(f'{args[0]} should be an integer')
 
 
 class GithubApi:
@@ -162,18 +208,12 @@ def main(offset_state=None):
     _configure_logging()
     config = _get_config_or_exit(os.environ)
     telegram_api = TelegramApi(config.telegram_token)
-    commands = {
-        '/help': lambda _: HELP_TEXT,
-        '/start': lambda _: HELP_TEXT,
-        '/echo': lambda args: '\n'.join(args),
-        '/show': GithubShowCommand(config.github_token),
-    }
-    commands_executor = CommandsExecutor(commands)
+    commands_executor = _get_commands_executor(config)
     while True:
         try:
             updates = telegram_api.get_updates(
                 offset=offset_state.offset,
-                limit=5,
+                limit=TELEGRAM_UPDATES_LIMIT,
                 timeout=DEFAULT_TELEGRAM_API_TIMEOUT,
             )
         except TelegramApiError:
@@ -183,19 +223,7 @@ def main(offset_state=None):
 
         if updates:
             for update in updates:
-                if update.message is None:
-                    parsed_message = ParsedMessage(
-                        '/help',
-                        [],
-                    )
-                else:
-                    try:
-                        parsed_message = parse_message_text(update.message.text)
-                    except ParseError:
-                        parsed_message = ParsedMessage(
-                            '/echo',
-                            args=['oops, something went wrong'],
-                        )
+                parsed_message = _get_parsed_message(update)
                 try:
                     message_text = commands_executor.execute(parsed_message)
                 except InvalidCommand as exc:
@@ -216,6 +244,33 @@ def main(offset_state=None):
                     time.sleep(10)
 
             offset_state.offset = _get_next_offset(updates)
+
+
+def _get_commands_executor(config: Config) -> CommandsExecutor:
+    commands = {
+        '/help': lambda _: HELP_TEXT,
+        '/start': lambda _: HELP_TEXT,
+        '/echo': lambda args: '\n'.join(args),
+        '/show': GithubShowCommand(config.github_token),
+    }
+    return CommandsExecutor(commands)
+
+
+def _get_parsed_message(update: Update) -> ParsedMessage:
+    if update.message is None:
+        parsed_message = ParsedMessage(
+            '/help',
+            [],
+        )
+    else:
+        try:
+            parsed_message = parse_message_text(update.message.text)
+        except ParseError:
+            parsed_message = ParsedMessage(
+                '/echo',
+                args=['oops, something went wrong'],
+            )
+    return parsed_message
 
 
 def _get_next_offset(bot_updates: tp.List[Update]) -> int:
@@ -389,15 +444,6 @@ def _make_message_from_api_item(item: tp.Mapping) -> tp.Union[Message, None]:
     )
 
 
-class ParsedMessage:
-    def __init__(self, name, args):
-        self.name = name
-        self.args = args
-
-    def __repr__(self):
-        return f'ParsedMessage(name={self.name!r}, args={self.args!r})'
-
-
 def parse_message_text(text: str) -> ParsedMessage:
     """
     :raises ParseError:
@@ -409,40 +455,3 @@ def parse_message_text(text: str) -> ParsedMessage:
         name=splitted[0],
         args=splitted[1:],
     )
-
-
-class CommandsExecutor:
-    def __init__(self, commands_by_name: tp.Mapping) -> None:
-        self.commands_by_name = commands_by_name
-
-    def execute(self, parsed_message: ParsedMessage) -> str:
-        try:
-            command = self.commands_by_name[parsed_message.name]
-        except KeyError:
-            raise InvalidCommand(f'unknown command {parsed_message.name}, type `/help`')
-        else:
-            return command(parsed_message.args)
-
-
-class GithubShowCommand:
-    def __init__(self, token, default_age_in_days=DEFAULT_AGE_IN_DAYS):
-        self.token = token
-        self.default_age_in_days = default_age_in_days
-
-    def __call__(self, args):
-        """
-        :raises GithubApiError:
-        """
-        age_in_days = self._get_age_in_days_or_invalid_args(args)
-        repositories = find_trending_repositories(self.token, age_in_days)
-        return format_html_message(repositories)
-
-    def _get_age_in_days_or_invalid_args(self, args):
-        if not args:
-            return self.default_age_in_days
-        if len(args) != 1:
-            raise InvalidCommand(f'this command accepts only one argument, got {len(args)}')
-        try:
-            return int(args[0])
-        except ValueError:
-            raise InvalidCommand(f'{args[0]} should be an integer')
