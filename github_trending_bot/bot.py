@@ -43,6 +43,10 @@ class TelegramApiError(ApiError):
     pass
 
 
+class ParseError(Error):
+    pass
+
+
 class Config:
     def __init__(self, github_token, telegram_token):
         self.github_token = github_token
@@ -404,7 +408,12 @@ class ParsedMessage:
         self.args = args
 
 
-def parse_message_text(text):
+def parse_message_text(text: str) -> ParsedMessage:
+    """
+    :raises ParseError:
+    """
+    if not text:
+        raise ParseError
     splitted = text.split(' ')
     return ParsedMessage(
         name=splitted[0],

@@ -314,6 +314,11 @@ def test_parse_message_text(text, expected_name, expected_args):
     assert parsed.args == expected_args
 
 
+def test_parse_message_text_error():
+    with pytest.raises(bot.ParseError):
+        bot.parse_message_text('')
+
+
 def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
 
