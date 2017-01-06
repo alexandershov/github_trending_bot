@@ -22,11 +22,12 @@ ECHO_COMMAND = '/echo'
 OFFSET_PATH = '/tmp/github_trending_last_update'
 
 GITHUB_API_BASE = 'https://api.github.com'
-DEFAULT_GITHUB_API_TIMEOUT = 5  # seconds
+DEFAULT_GITHUB_API_SOCKET_TIMEOUT = 5  # seconds
 GITHUB_CACHE_TTL = 600  # seconds
 DEFAULT_AGE_IN_DAYS = 7
 
-DEFAULT_TELEGRAM_API_TIMEOUT = 60  # seconds
+DEFAULT_TELEGRAM_API_SOCKET_TIMEOUT = 70  # seconds
+DEFAULT_TELEGRAM_API_LONG_POLLING_TIMEOUT = 60  # seconds
 TELEGRAM_UPDATES_LIMIT = 5  # items in an array
 HELP_TEXT = f'{HELP_COMMAND} [DAYS] - show trending repositories created in the last DAYS'
 
@@ -132,9 +133,9 @@ class GithubShowCommand:
 
 
 class GithubApi:
-    def __init__(self, token: str, timeout=DEFAULT_GITHUB_API_TIMEOUT) -> None:
+    def __init__(self, token: str, socket_timeout=DEFAULT_GITHUB_API_SOCKET_TIMEOUT) -> None:
         self.token = token
-        self.timeout = timeout
+        self.socket_timeout = socket_timeout
 
     def find_trending_repositories(self, created_after: dt.datetime, limit: int) -> tp.List[Repo]:
         """
@@ -154,7 +155,7 @@ class GithubApi:
         }
         logging.info('getting trending repositories from github: %r with params %r', url, params)
         with _convert_exceptions(requests.RequestException, GithubApiError):
-            response = requests.get(url, params=params, headers=headers, timeout=self.timeout)
+            response = requests.get(url, params=params, headers=headers, timeout=self.socket_timeout)
             response.raise_for_status()
         try:
             response_data = response.json()
@@ -222,7 +223,7 @@ def main(offset_state=None):
             updates = telegram_api.get_updates(
                 offset=offset_state.offset,
                 limit=TELEGRAM_UPDATES_LIMIT,
-                timeout=DEFAULT_TELEGRAM_API_TIMEOUT,
+                timeout=DEFAULT_TELEGRAM_API_LONG_POLLING_TIMEOUT,
             )
         except TelegramApiError:
             logging.error('could not get updates from telegram, sleeping 10 seconds ...', exc_info=True)
@@ -254,10 +255,10 @@ def main(offset_state=None):
 
 def _get_commands_executor(config: Config) -> CommandsExecutor:
     commands = {
-        '/help': lambda _: HELP_TEXT,
-        '/start': lambda _: HELP_TEXT,
-        '/echo': lambda args: '\n'.join(args),
-        '/show': GithubShowCommand(config.github_token),
+        HELP_COMMAND: lambda _: HELP_TEXT,
+        START_COMMAND: lambda _: HELP_TEXT,
+        ECHO_COMMAND: lambda args: '\n'.join(args),
+        SHOW_COMMAND: GithubShowCommand(config.github_token),
     }
     return CommandsExecutor(commands)
 
@@ -265,7 +266,7 @@ def _get_commands_executor(config: Config) -> CommandsExecutor:
 def _get_parsed_message(update: Update) -> ParsedMessage:
     if update.message is None:
         parsed_message = ParsedMessage(
-            '/help',
+            HELP_COMMAND,
             [],
         )
     else:
@@ -273,14 +274,14 @@ def _get_parsed_message(update: Update) -> ParsedMessage:
             parsed_message = parse_message_text(update.message.text)
         except ParseError:
             parsed_message = ParsedMessage(
-                '/echo',
+                ECHO_COMMAND,
                 args=['oops, something went wrong'],
             )
     return parsed_message
 
 
 class FileOffsetState:
-    def __init__(self, path):
+    def __init__(self, path: str):
         self.path = path
 
     @property
@@ -347,9 +348,9 @@ def format_html_message(repositories: tp.List[Repo]) -> str:
 
 
 class TelegramApi:
-    def __init__(self, token: str, timeout: int = DEFAULT_TELEGRAM_API_TIMEOUT) -> None:
+    def __init__(self, token: str, socket_timeout: int = DEFAULT_TELEGRAM_API_SOCKET_TIMEOUT) -> None:
         self.token = token
-        self.timeout = timeout
+        self.socket_timeout = socket_timeout
 
     def send_message(self, chat_id: int, text: str, parse_mode: str = '', disable_web_page_preview: bool = False,
                      disable_notification: bool = False) -> None:
@@ -368,10 +369,11 @@ class TelegramApi:
         if parse_mode:
             params['parse_mode'] = parse_mode
 
-        logging.info('sending message to chat_id %s with params %r', chat_id, params)
+        logging.info('sending message to chat_id %s with params %r ...', chat_id, params)
         with _convert_exceptions(requests.RequestException, TelegramApiError):
-            response = requests.post(url, json=params, timeout=self.timeout)
+            response = requests.post(url, json=params, timeout=self.socket_timeout)
             response.raise_for_status()
+        logging.info('sent message to chat_id %s with params %r', chat_id, params)
 
     def get_updates(self, offset: int, limit: int, timeout: int) -> tp.List[Update]:
         """
@@ -385,15 +387,14 @@ class TelegramApi:
         )
         logging.info('getting updates from telegram ...')
         with _convert_exceptions(requests.RequestException, TelegramApiError):
-            response = requests.post(url, json=params, timeout=self.timeout)
+            response = requests.post(url, json=params, timeout=self.socket_timeout)
             response.raise_for_status()
-        # TODO: dry with github
         try:
             response_data = response.json()
         except ValueError as exc:
             raise TelegramApiError(f"can't convert {response.text!r} to json") from exc
-        result = _get_or_raise(response_data, 'result', list, TelegramApiError)
         logging.info('got response %s', response_data)
+        result = _get_or_raise(response_data, 'result', list, TelegramApiError)
         updates = [
             _make_update_from_api_item(item)
             for item in result
