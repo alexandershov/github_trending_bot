@@ -8,6 +8,7 @@ import typing as tp
 import urllib.parse as urlparse
 from contextlib import contextmanager
 
+from cachetools.func import ttl_cache
 import requests
 
 # TODO: refactoring
@@ -18,6 +19,7 @@ import requests
 OFFSET_PATH = '/tmp/github_trending_last_update'
 DEFAULT_GITHUB_API_TIMEOUT = 5  # seconds
 DEFAULT_TELEGRAM_API_TIMEOUT = 60  # seconds
+GITHUB_CACHE_TTL = 60  # seconds
 DEFAULT_AGE_IN_DAYS = 7
 HELP_TEXT = '/show [DAYS] - show trending repositories created in the last DAYS'
 
@@ -106,6 +108,7 @@ class GithubApi:
         except ValueError as exc:
             raise GithubApiError(f"can't convert {response.text!r} to json") from exc
         items = _get_or_raise(response_data, 'items', list, GithubApiError)
+        logging.info('got %d repositories from github: %r', len(items), items)
         return [
             _make_repo_from_api_item(one_item)
             for one_item in items
@@ -134,6 +137,7 @@ def _get_or_raise(item, key, expected_type, exception_class):
         return value
 
 
+@ttl_cache(ttl=GITHUB_CACHE_TTL)
 def find_trending_repositories(github_token: str, age_in_days: int) -> tp.List[Repo]:
     """
     :raises GithubApiError:

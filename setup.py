@@ -5,6 +5,7 @@ setup(
     version='0.1.0',
     install_requires=[
         'requests==2.12.4',
+        'cachetools==2.0.0',
     ],
     entry_points={
         'console_scripts': [
