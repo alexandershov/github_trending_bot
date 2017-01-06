@@ -190,6 +190,21 @@ def test_telegram_api_send_message_bad_status(mock_kwargs):
         )
 
 
+def _make_message_item(update_id, chat_id, message_id, text=None):
+    result = {
+        'message': {
+            'chat': {
+                'id': chat_id
+            },
+            'message_id': message_id
+        },
+        'update_id': update_id,
+    }
+    if text is not None:
+        result['message']['text'] = text
+    return result
+
+
 @responses.activate
 def test_telegram_api_get_messages():
     responses.add(
@@ -197,16 +212,7 @@ def test_telegram_api_get_messages():
         'https://api.telegram.org/botsome_telegram_token/getUpdates',
         json={
             'result': [
-                {
-                    'message': {
-                        'chat': {
-                            'id': 1
-                        },
-                        'message_id': 2,
-                        'text': '/show',
-                    },
-                    'update_id': 3,
-                }
+                _make_message_item(1, 2, 3, '/show')
             ]
         },
     )
@@ -229,10 +235,10 @@ def test_telegram_api_get_messages():
     )
     assert len(messages) == 1
     message = messages[0]
-    assert message.chat_id == 1
-    assert message.message_id == 2
+    assert message.update_id == 1
+    assert message.chat_id == 2
+    assert message.message_id == 3
     assert message.text == '/show'
-    assert message.update_id == 3
 
 
 @pytest.mark.parametrize('mock_kwargs', [
