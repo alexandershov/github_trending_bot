@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import typing as tp
+import urllib.parse as urlparse
 
 import requests
 
@@ -53,6 +54,16 @@ class Update:
         self.chat_id = chat_id
         self.message_id = message_id
         self.age_in_days = age_in_days
+
+
+class Message:
+    def __init__(self, update_id: int, chat_id: int, message_id: int, text: str):
+        self.update_id = update_id
+        self.chat_id = chat_id
+        self.message_id = message_id
+        self.text = text
+
+
 
 
 def _get_age_in_days(item):
@@ -289,7 +300,7 @@ class TelegramApi:
         disable_web_page_preview: bool = False, disable_notification: bool = False):
         if not text:
             return
-        url = f'https://api.telegram.org/bot{self.token}/sendMessage'
+        url = self._get_method_url('sendMessage')
         params = {
             'chat_id': chat_id,
             'text': text,
@@ -306,9 +317,8 @@ class TelegramApi:
         except requests.HTTPError as exc:
             raise TelegramApiError(f'got error during call to telegram api: {exc!r}')
 
-    def get_messages(self, offset: int, limit: int, timeout: int) -> tp.List[Update]:
-        # TODO: dry url with send_message
-        url = f'https://api.telegram.org/bot{self.token}/getUpdates'
+    def get_messages(self, offset: int, limit: int, timeout: int) -> tp.List[Message]:
+        url = self._get_method_url('getUpdates')
         params = dict(
             offset=offset,
             timeout=timeout,
@@ -318,15 +328,21 @@ class TelegramApi:
         response = requests.post(url, json=params, timeout=self.timeout)
         response.raise_for_status()
         logging.info('got response %s', response.json())
-        updates = [
-            Update(
-                telegram_id=item['update_id'],
+        messages = [
+            Message(
+                update_id=item['update_id'],
                 chat_id=item['message']['chat']['id'],
                 message_id=item['message']['message_id'],
-                age_in_days=_get_age_in_days(item),
+                text=item['message']['text'],
             )
             for item in response.json()['result']
             if item.get('message', {}).get('text', '').startswith('/show')
             ]
-        logging.info('got %d updates from telegram', len(updates))
-        return updates
+        logging.info('got %d updates from telegram', len(messages))
+        return messages
+
+    def _get_method_url(self, method_name):
+        return urlparse.urljoin(
+            f'https://api.telegram.org/bot{self.token}/',
+            method_name,
+        )
