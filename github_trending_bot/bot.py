@@ -451,6 +451,8 @@ class GithubShowCommand:
     def _get_age_in_days_or_invalid_args(self, args):
         if not args:
             return self.default_age_in_days
+        if len(args) != 1:
+            raise InvalidCommand(f'this command accepts only one argument, got {len(args)}')
         try:
             return int(args[0])
         except ValueError:

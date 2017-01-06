@@ -365,8 +365,10 @@ def test_github_show_command(monkeypatch, args, expected_result):
 
 
 @pytest.mark.parametrize('args', [
+    # many args
+    ['3', '4'],
     # not an int
-    ['']
+    [''],
 ])
 def test_github_show_command_error_handling(args):
     with pytest.raises(bot.InvalidCommand):
