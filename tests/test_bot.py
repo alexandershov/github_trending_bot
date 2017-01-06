@@ -349,6 +349,10 @@ def _make_repo(age_in_days):
         [],
         '<a href="http://example.com">some_name 7</a> - some_description',
     ),
+    (
+        ['1'],
+        '<a href="http://example.com">some_name 1</a> - some_description',
+    ),
 ])
 def test_execute_show_command(monkeypatch, args, expected_result):
     monkeypatch.setattr(

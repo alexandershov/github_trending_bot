@@ -20,7 +20,8 @@ import requests
 
 
 PATH = '/tmp/github_trending_last_update'
-DEFAULT_API_TIMEOUT = 5
+DEFAULT_API_TIMEOUT = 5  # seconds
+DEFAULT_AGE_IN_DAYS = 7
 
 
 class Error(Exception):
@@ -431,8 +432,9 @@ class CommandsExecutor:
 
 
 class GithubShowCommand:
-    def __init__(self, token):
+    def __init__(self, token, default_age_in_days=DEFAULT_AGE_IN_DAYS):
         self.token = token
+        self.default_age_in_days = default_age_in_days
 
     def __call__(self, args):
         """
@@ -444,6 +446,7 @@ class GithubShowCommand:
 
     def _get_age_in_days_or_invalid_args(self, args):
         if not args:
-            return 7
+            return self.default_age_in_days
+        return int(args[0])
 
 
