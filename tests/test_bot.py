@@ -335,6 +335,31 @@ def test_run_help_command(name):
     assert commands.execute(parsed_message) == 'some_help_text'
 
 
+def _make_repo(age_in_days):
+    return bot.Repo(
+        name=f'some_name {age_in_days}',
+        description='some_description',
+        html_url='http://example.com',
+    )
+
+
+@pytest.mark.parametrize('args, expected_result', [
+    # 7 by default
+    (
+        [],
+        '<a href="http://example.com">some_name 7</a> - some_description',
+    ),
+])
+def test_execute_show_command(monkeypatch, args, expected_result):
+    monkeypatch.setattr(
+        bot,
+        'find_trending_repositories',
+        lambda github_token, age_in_days: [_make_repo(age_in_days)]
+    )
+    result = bot.GithubShowCommand('some_github_token')(args)
+    assert result == expected_result
+
+
 def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
 

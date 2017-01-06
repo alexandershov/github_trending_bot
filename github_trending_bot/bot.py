@@ -428,3 +428,22 @@ class CommandsExecutor:
     def execute(self, parsed_message: ParsedMessage) -> str:
         command = self.commands_by_name[parsed_message.name]
         return command(parsed_message.args)
+
+
+class GithubShowCommand:
+    def __init__(self, token):
+        self.token = token
+
+    def __call__(self, args):
+        """
+        :raises GithubApiError:
+        """
+        age_in_days = self._get_age_in_days_or_invalid_args(args)
+        repositories = find_trending_repositories(self.token, age_in_days)
+        return format_html_message(repositories)
+
+    def _get_age_in_days_or_invalid_args(self, args):
+        if not args:
+            return 7
+
+
