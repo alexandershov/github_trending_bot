@@ -275,7 +275,6 @@ def test_telegram_api_get_updates(message_item, expected_update_id, expected_cha
                     'message': {}
                 }
             ]
-            ,
         },
     },
 ])
