@@ -321,11 +321,9 @@ class TelegramApi:
             params['parse_mode'] = parse_mode
 
         logging.info('sending message to chat_id %s with params %r', chat_id, params)
-        response = requests.post(url, json=params, timeout=self.timeout)
-        try:
+        with _convert_exceptions(requests.RequestException, TelegramApiError):
+            response = requests.post(url, json=params, timeout=self.timeout)
             response.raise_for_status()
-        except requests.HTTPError as exc:
-            raise TelegramApiError(f'got error during call to telegram api: {exc!r}')
 
     def get_messages(self, offset: int, limit: int, timeout: int) -> tp.List[Message]:
         """

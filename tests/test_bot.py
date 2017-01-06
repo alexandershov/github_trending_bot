@@ -163,12 +163,20 @@ def test_telegram_api_send_message():
     )
 
 
+@pytest.mark.parametrize('mock_kwargs', [
+    {
+        'status': 400,
+    },
+    {
+        'body': requests.Timeout(),
+    },
+])
 @responses.activate
-def test_telegram_api_send_message_bad_status():
+def test_telegram_api_send_message_bad_status(mock_kwargs):
     responses.add(
         responses.POST,
         'https://api.telegram.org/botsome_telegram_token/sendMessage',
-        status=400,
+        **mock_kwargs
     )
     api = bot.TelegramApi('some_telegram_token')
     with pytest.raises(bot.TelegramApiError):
@@ -226,7 +234,7 @@ def test_telegram_api_get_messages():
 @pytest.mark.parametrize('mock_kwargs', [
     {
         'body': requests.Timeout('mock timeout'),
-    }
+    },
 ])
 @responses.activate
 def test_telegram_api_get_messages_error_handling(mock_kwargs):
@@ -242,6 +250,7 @@ def test_telegram_api_get_messages_error_handling(mock_kwargs):
             limit=2,
             timeout=3,
         )
+
 
 def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
