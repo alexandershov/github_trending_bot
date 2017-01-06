@@ -149,11 +149,9 @@ class GithubApi:
             'per_page': str(limit),
         }
         logging.info('getting trending repositories from github: %r with params %r', url, params)
-        response = requests.get(url, params=params, headers=headers, timeout=self.timeout)
-        try:
+        with _convert_exceptions(requests.RequestException, GithubApiError):
+            response = requests.get(url, params=params, headers=headers, timeout=self.timeout)
             response.raise_for_status()
-        except requests.HTTPError as exc:
-            raise GithubApiError(f'got error during call to github api: {exc!r}')
         try:
             response_data = response.json()
         except ValueError as exc:

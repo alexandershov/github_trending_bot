@@ -78,6 +78,10 @@ def test_github_api_find_trending_repositories():
     {
         'status': 400,
     },
+    # raises
+    {
+        'body': requests.Timeout(),
+    },
     # not a json body
     {
         'body': 'not a json',
