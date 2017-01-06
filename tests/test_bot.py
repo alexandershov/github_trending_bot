@@ -214,6 +214,12 @@ def test_telegram_api_get_messages():
             'timeout': 3,
         }
     )
+    assert len(messages) == 1
+    message = messages[0]
+    assert message.chat_id == 1
+    assert message.message_id == 2
+    assert message.text == '/show'
+    assert message.update_id == 3
 
 
 def _get_http_get_params(parse_result):
