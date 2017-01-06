@@ -21,7 +21,8 @@ import requests
 
 
 OFFSET_PATH = '/tmp/github_trending_last_update'
-DEFAULT_API_TIMEOUT = 5  # seconds
+DEFAULT_GITHUB_API_TIMEOUT = 5  # seconds
+DEFAULT_TELEGRAM_API_TIMEOUT = 60  # seconds
 DEFAULT_AGE_IN_DAYS = 7
 HELP_TEXT = '/show [DAYS] - show trending repositories created in the last DAYS'
 
@@ -81,7 +82,7 @@ class Repo:
 
 
 class GithubApi:
-    def __init__(self, token: str, timeout=DEFAULT_API_TIMEOUT) -> None:
+    def __init__(self, token: str, timeout=DEFAULT_GITHUB_API_TIMEOUT) -> None:
         self.token = token
         self.timeout = timeout
 
@@ -122,7 +123,7 @@ def _make_repo_from_api_item(item) -> Repo:
     """
     return Repo(
         name=_get_or_raise(item, 'name', str, GithubApiError),
-        description=_get_or_raise(item, 'description', str, GithubApiError),
+        description=(_get_or_raise(item, 'description', (str, type(None)), GithubApiError)) or '',
         html_url=_get_or_raise(item, 'html_url', str, GithubApiError),
     )
 
@@ -172,7 +173,11 @@ def main(offset_state=None):
     commands_executor = CommandsExecutor(commands)
     while True:
         try:
-            updates = telegram_api.get_updates(offset=offset_state.offset, limit=5, timeout=1000)
+            updates = telegram_api.get_updates(
+                offset=offset_state.offset,
+                limit=5,
+                timeout=DEFAULT_TELEGRAM_API_TIMEOUT,
+            )
         except TelegramApiError:
             logging.error('could not get updates from telegram, sleeping 10 seconds ...', exc_info=True)
             time.sleep(10)
@@ -198,7 +203,7 @@ def main(offset_state=None):
                 except InvalidCommand as exc:
                     message_text = str(exc)
                 except Error:
-                    logging.error(f'got an error when executing {parsed_message!r}')
+                    logging.error(f'got an error when executing {parsed_message!r}', exc_info=True)
                     message_text = 'oops, something went wrong'
                 try:
                     telegram_api.send_message(
@@ -281,7 +286,7 @@ def format_html_message(repositories: tp.List[Repo]) -> str:
 
 
 class TelegramApi:
-    def __init__(self, token: str, timeout: int = DEFAULT_API_TIMEOUT) -> None:
+    def __init__(self, token: str, timeout: int = DEFAULT_TELEGRAM_API_TIMEOUT) -> None:
         self.token = token
         self.timeout = timeout
 
