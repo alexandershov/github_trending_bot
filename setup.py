@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='github_trending_bot',
-    version='0.1.0',
+    version='0.1.1',
     install_requires=[
         'requests==2.12.4',
         'cachetools==2.0.0',
