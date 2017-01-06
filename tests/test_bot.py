@@ -217,8 +217,8 @@ def _make_message_item(update_id, chat_id, message_id, text=None):
     ),
 ])
 @responses.activate
-def test_telegram_api_get_messages(message_item, expected_update_id, expected_chat_id, expected_message_id,
-                                   expected_text):
+def test_telegram_api_get_updates(message_item, expected_update_id, expected_chat_id, expected_message_id,
+                                  expected_text):
     responses.add(
         responses.POST,
         'https://api.telegram.org/botsome_telegram_token/getUpdates',
@@ -229,7 +229,7 @@ def test_telegram_api_get_messages(message_item, expected_update_id, expected_ch
         },
     )
     api = bot.TelegramApi('some_telegram_token')
-    messages = api.get_messages(
+    messages = api.get_updates(
         offset=1,
         limit=2,
         timeout=3,
@@ -287,7 +287,7 @@ def test_telegram_api_get_messages_error_handling(mock_kwargs):
     )
     api = bot.TelegramApi('some_telegram_token')
     with pytest.raises(bot.TelegramApiError):
-        api.get_messages(
+        api.get_updates(
             offset=1,
             limit=2,
             timeout=3,

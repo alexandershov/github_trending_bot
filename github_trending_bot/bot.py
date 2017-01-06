@@ -300,9 +300,8 @@ class TelegramApi:
         self.token = token
         self.timeout = timeout
 
-    def send_message(
-        self, chat_id: int, text: str, parse_mode: str = '',
-        disable_web_page_preview: bool = False, disable_notification: bool = False) -> None:
+    def send_message(self, chat_id: int, text: str, parse_mode: str = '', disable_web_page_preview: bool = False,
+                     disable_notification: bool = False) -> None:
         """
         :raises TelegramApiError:
         """
@@ -323,7 +322,7 @@ class TelegramApi:
             response = requests.post(url, json=params, timeout=self.timeout)
             response.raise_for_status()
 
-    def get_messages(self, offset: int, limit: int, timeout: int) -> tp.List[Message]:
+    def get_updates(self, offset: int, limit: int, timeout: int) -> tp.List[Message]:
         """
         :raises TelegramApiError:
         """
