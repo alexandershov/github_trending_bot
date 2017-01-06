@@ -1,5 +1,5 @@
 ## What is it?
-Source code for telegram.me/github_trending_bot
+Source code for https://telegram.me/github_trending_bot
 
 ## Install
 ```bash
