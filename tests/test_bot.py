@@ -289,7 +289,7 @@ def test_telegram_api_get_updates(message_item, expected_update_id, expected_mes
     },
 ])
 @responses.activate
-def test_telegram_api_get_updatesj_error_handling(mock_kwargs):
+def test_telegram_api_get_updates_error_handling(mock_kwargs):
     responses.add(
         responses.POST,
         'https://api.telegram.org/botsome_telegram_token/getUpdates',
