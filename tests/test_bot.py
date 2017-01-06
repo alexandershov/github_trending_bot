@@ -394,23 +394,28 @@ class _DummyOffsetState:
         raise _BreakFromInfiniteLoop
 
 
-@pytest.mark.parametrize('updates, expected_text, expected_offset_state', [
+@pytest.mark.parametrize('update_texts, expected_text, expected_offset_state', [
     (
         [
-            bot.Update(
-                update_id=3,
-                message=bot.Message(
-                    chat_id=1,
-                    message_id=2,
-                    text='/show'
-                )
-            )
+            '/show'
         ],
         '<a href="http://example.com">some_name 7</a> - some_description',
         4,
     ),
 ])
-def test_main(monkeypatch, updates, expected_text, expected_offset_state):
+def test_main(monkeypatch, update_texts, expected_text, expected_offset_state):
+    updates = []
+    for text in update_texts:
+        message = bot.Message(
+            chat_id=1,
+            message_id=2,
+            text=text,
+        )
+        update = bot.Update(
+            update_id=3,
+            message=message,
+        )
+        updates.append(update)
     sent_messages = _monkeypatch_for_main(monkeypatch, updates)
     offset_state = _DummyOffsetState()
     with pytest.raises(_BreakFromInfiniteLoop):
