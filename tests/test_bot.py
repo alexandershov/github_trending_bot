@@ -354,7 +354,7 @@ def _make_repo(age_in_days):
         '<a href="http://example.com">some_name 1</a> - some_description',
     ),
 ])
-def test_execute_show_command(monkeypatch, args, expected_result):
+def test_github_show_command(monkeypatch, args, expected_result):
     monkeypatch.setattr(
         bot,
         'find_trending_repositories',
@@ -362,6 +362,15 @@ def test_execute_show_command(monkeypatch, args, expected_result):
     )
     result = bot.GithubShowCommand('some_github_token')(args)
     assert result == expected_result
+
+
+@pytest.mark.parametrize('args', [
+    # not an int
+    ['']
+])
+def test_github_show_command_error_handling(args):
+    with pytest.raises(bot.InvalidCommand):
+        bot.GithubShowCommand('some_github_token')(args)
 
 
 def _get_http_get_params(parse_result):

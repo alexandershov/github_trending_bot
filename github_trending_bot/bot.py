@@ -44,7 +44,11 @@ class TelegramApiError(ApiError):
     pass
 
 
-class ParseError(Error):
+class InvalidCommand(Error):
+    pass
+
+
+class ParseError(InvalidCommand):
     pass
 
 
@@ -447,6 +451,7 @@ class GithubShowCommand:
     def _get_age_in_days_or_invalid_args(self, args):
         if not args:
             return self.default_age_in_days
-        return int(args[0])
-
-
+        try:
+            return int(args[0])
+        except ValueError:
+            raise InvalidCommand(f'{args[0]} should be an integer')
