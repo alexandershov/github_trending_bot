@@ -228,6 +228,9 @@ def main(offset_state=None):
             continue
 
         for update in updates:
+            if update.message is None:
+                logging.info('update %r has no message', update.update_id)
+                continue
             parsed_message = _get_parsed_message(update)
             try:
                 message_text = commands_executor.execute(parsed_message)
