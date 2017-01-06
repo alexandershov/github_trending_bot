@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+import os
 import urllib.parse as urlparse
 
 import pytest
@@ -373,6 +374,55 @@ def test_github_show_command(monkeypatch, args, expected_result):
 def test_github_show_command_error_handling(args):
     with pytest.raises(bot.InvalidCommand):
         bot.GithubShowCommand('some_github_token')(args)
+
+
+class _DummyOffsetState:
+    def __init__(self):
+        self.offset = 0
+
+
+def test_main(monkeypatch):
+    sent_messages = _monkeypatch_for_main(monkeypatch)
+    offset_state = _DummyOffsetState()
+    bot.main(offset_state=offset_state)
+    assert len(sent_messages) == 1
+
+
+def _monkeypatch_for_main(monkeypatch):
+    sent_messages = []
+    monkeypatch.setattr(
+        bot,
+        'find_trending_repositories',
+        lambda github_token, age_in_days: [_make_repo(age_in_days)]
+    )
+    monkeypatch.setattr(
+        os,
+        'environ',
+        {
+            'GITHUB_TOKEN': 'some_github_token',
+            'TELEGRAM_TOKEN': 'some_telegram_token',
+        }
+    )
+    message = bot.Message(
+        chat_id=1,
+        message_id=2,
+        text='/show'
+    )
+    update = bot.Update(
+        update_id=3,
+        message=message,
+    )
+    monkeypatch.setattr(
+        bot.TelegramApi,
+        'get_updates',
+        lambda self, offset, limit, timeout: [update]
+    )
+    monkeypatch.setattr(
+        bot.TelegramApi,
+        'send_message',
+        lambda self, *args: sent_messages.append(args)
+    )
+    return sent_messages
 
 
 def _get_http_get_params(parse_result):

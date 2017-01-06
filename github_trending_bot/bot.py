@@ -19,7 +19,7 @@ import requests
 # TODO: remove magic constants
 
 
-PATH = '/tmp/github_trending_last_update'
+OFFSET_PATH = '/tmp/github_trending_last_update'
 DEFAULT_API_TIMEOUT = 5  # seconds
 DEFAULT_AGE_IN_DAYS = 7
 
@@ -215,14 +215,15 @@ def _configure_logging():
     )
 
 
-def main():
+def main(offset_state=None):
+    if offset_state is None:
+        offset_state = FileOffsetState(OFFSET_PATH)
     _configure_logging()
     config = _get_config_or_exit(os.environ)
     bot = Bot(config.telegram_token)
     telegram_api = TelegramApi(config.telegram_token)
-    offset = _read_offset()
     while True:
-        bot_updates = bot.get_updates(offset=offset, limit=5, timeout=1000)
+        bot_updates = bot.get_updates(offset=offset_state.offset, limit=5, timeout=1000)
         if bot_updates:
             for update in bot_updates:
                 try:
@@ -237,22 +238,26 @@ def main():
                     disable_web_page_preview=True,
                     disable_notification=True,
                 )
-            offset = _get_next_offset(bot_updates)
-            _save_offset(offset)
+            offset_state.offset = _get_next_offset(bot_updates)
 
 
 def _get_next_offset(bot_updates: tp.List[Update]) -> int:
     return max(update.telegram_id for update in bot_updates) + 1
 
 
-def _read_offset() -> int:
-    with open(PATH, 'r') as fileobj:
-        return int(fileobj.read())
+class FileOffsetState:
+    def __init__(self, path):
+        self.path = path
 
+    @property
+    def offset(self) -> int:
+        with open(self.path, 'r') as fileobj:
+            return int(fileobj.read())
 
-def _save_offset(offset: int):
-    with open(PATH, 'w') as fileobj:
-        fileobj.write(str(offset))
+    @offset.setter
+    def offset(self, offset: int):
+        with open(self.path, 'w') as fileobj:
+            fileobj.write(str(offset))
 
 
 @contextmanager
