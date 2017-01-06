@@ -3,6 +3,7 @@ import html
 import logging
 import os
 import sys
+import time
 import typing as tp
 import urllib.parse as urlparse
 from contextlib import contextmanager
@@ -22,6 +23,7 @@ import requests
 OFFSET_PATH = '/tmp/github_trending_last_update'
 DEFAULT_API_TIMEOUT = 5  # seconds
 DEFAULT_AGE_IN_DAYS = 7
+HELP_TEXT = '/show [DAYS] - show trending repositories created in the last DAYS'
 
 
 class Error(Exception):
@@ -53,15 +55,9 @@ class ParseError(InvalidCommand):
 
 
 class Config:
-    def __init__(self, github_token, telegram_token):
+    def __init__(self, github_token: str, telegram_token: str):
         self.github_token = github_token
         self.telegram_token = telegram_token
-
-
-class Update:
-    def __init__(self, update_id, message):
-        self.update_id = update_id
-        self.message = message
 
 
 class Message:
@@ -71,59 +67,10 @@ class Message:
         self.text = text
 
 
-def _get_age_in_days(item):
-    command, *args = item['message']['text'].split()
-    if len(args) != 1:
-        return 7
-    try:
-        return int(args[0])
-    except ValueError:
-        return 7
-
-
-class Bot:
-    def __init__(self, telegram_token: str):
-        assert telegram_token
-        self.telegram_token = telegram_token
-
-    def get_updates(self, offset: int, limit: int, timeout: int) -> tp.List[Update]:
-        url = f'https://api.telegram.org/bot{self.telegram_token}/getUpdates'
-        params = dict(
-            offset=offset,
-            timeout=timeout,
-            limit=limit,
-        )
-        logging.info('getting updates from telegram ...')
-        response = requests.post(url, json=params)
-        response.raise_for_status()
-        logging.info('got response %s', response.json())
-        updates = [
-            Update(
-                telegram_id=item['update_id'],
-                chat_id=item['message']['chat']['id'],
-                message_id=item['message']['message_id'],
-                age_in_days=_get_age_in_days(item),
-            )
-            for item in response.json()['result']
-            if item.get('message', {}).get('text', '').startswith('/show')
-            ]
-        logging.info('got %d updates from telegram', len(updates))
-        return updates
-
-    def reply(self, chat_id, message_id, text):
-        if not text:
-            return
-        url = f'https://api.telegram.org/bot{self.telegram_token}/sendMessage'
-        params = dict(
-            chat_id=chat_id,
-            text=text,
-            parse_mode='HTML',
-            disable_web_page_preview=True,
-            disable_notification=True,
-        )
-        logging.info('sending reply to %s with params %r', chat_id, params)
-        response = requests.post(url, json=params)
-        response.raise_for_status()
+class Update:
+    def __init__(self, update_id: int, message: Message):
+        self.update_id = update_id
+        self.message = message
 
 
 class Repo:
@@ -191,11 +138,6 @@ def _get_or_raise(item, key, expected_type, exception_class):
         return value
 
 
-def reply_to_update(bot: Bot, update: Update, repositories: tp.List[Repo]):
-    message = format_html_message(repositories)
-    bot.reply(update.chat_id, update.message_id, message)
-
-
 def find_trending_repositories(github_token: str, age_in_days: int) -> tp.List[Repo]:
     """
     :raises GithubApiError:
@@ -220,29 +162,59 @@ def main(offset_state=None):
         offset_state = FileOffsetState(OFFSET_PATH)
     _configure_logging()
     config = _get_config_or_exit(os.environ)
-    bot = Bot(config.telegram_token)
     telegram_api = TelegramApi(config.telegram_token)
+    commands = {
+        '/help': lambda _: HELP_TEXT,
+        '/start': lambda _: HELP_TEXT,
+        '/echo': lambda args: '\n'.join(args),
+        '/show': GithubShowCommand(config.github_token),
+    }
+    commands_executor = CommandsExecutor(commands)
     while True:
-        bot_updates = bot.get_updates(offset=offset_state.offset, limit=5, timeout=1000)
-        if bot_updates:
-            for update in bot_updates:
+        try:
+            updates = telegram_api.get_updates(offset=offset_state.offset, limit=5, timeout=1000)
+        except TelegramApiError:
+            logging.error('could not get updates from telegram, sleeping 10 seconds ...', exc_info=True)
+            time.sleep(10)
+            continue
+
+        if updates:
+            for update in updates:
+                if update.message is None:
+                    parsed_message = ParsedMessage(
+                        '/help',
+                        [],
+                    )
+                else:
+                    try:
+                        parsed_message = parse_message_text(update.message.text)
+                    except ParseError:
+                        parsed_message = ParsedMessage(
+                            '/echo',
+                            args=['oops, something went wrong'],
+                        )
                 try:
-                    repositories = find_trending_repositories(config.github_token, update.age_in_days)
-                except GithubApiError as exc:
-                    logging.error(f'got an error during call to github api: {exc!r}')
-                    break
-                telegram_api.send_message(
-                    chat_id=update.chat_id,
-                    text=format_html_message(repositories),
-                    parse_mode='HTML',
-                    disable_web_page_preview=True,
-                    disable_notification=True,
-                )
-            offset_state.offset = _get_next_offset(bot_updates)
+                    message_text = commands_executor.execute(parsed_message)
+                except Error:
+                    logging.error(f'got an error when executing {parsed_message!r}')
+                    message_text = 'oops, something went wrong'
+                try:
+                    telegram_api.send_message(
+                        chat_id=update.message.chat_id,
+                        text=message_text,
+                        parse_mode='HTML',
+                        disable_web_page_preview=True,
+                        disable_notification=True,
+                    )
+                except TelegramApiError:
+                    logging.error('could not get send message to telegram, sleeping 10 seconds ...', exc_info=True)
+                    time.sleep(10)
+
+            offset_state.offset = _get_next_offset(updates)
 
 
 def _get_next_offset(bot_updates: tp.List[Update]) -> int:
-    return max(update.telegram_id for update in bot_updates) + 1
+    return max(update.update_id for update in bot_updates) + 1
 
 
 class FileOffsetState:
@@ -416,6 +388,9 @@ class ParsedMessage:
     def __init__(self, name, args):
         self.name = name
         self.args = args
+
+    def __repr__(self):
+        return f'ParsedMessage(name={self.name!r}, args={self.args!r})'
 
 
 def parse_message_text(text: str) -> ParsedMessage:

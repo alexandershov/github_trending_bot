@@ -376,15 +376,28 @@ def test_github_show_command_error_handling(args):
         bot.GithubShowCommand('some_github_token')(args)
 
 
+class _BreakFromInfiniteLoop(Exception):
+    pass
+
 class _DummyOffsetState:
     def __init__(self):
-        self.offset = 0
+        self._offset = 0
+
+    @property
+    def offset(self):
+        return self._offset
+
+    @offset.setter
+    def offset(self, offset):
+        self._offset = offset
+        raise _BreakFromInfiniteLoop
 
 
 def test_main(monkeypatch):
     sent_messages = _monkeypatch_for_main(monkeypatch)
     offset_state = _DummyOffsetState()
-    bot.main(offset_state=offset_state)
+    with pytest.raises(_BreakFromInfiniteLoop):
+        bot.main(offset_state=offset_state)
     assert len(sent_messages) == 1
 
 
@@ -420,7 +433,7 @@ def _monkeypatch_for_main(monkeypatch):
     monkeypatch.setattr(
         bot.TelegramApi,
         'send_message',
-        lambda self, *args: sent_messages.append(args)
+        lambda self, *args, **kwargs: sent_messages.append((args, kwargs))
     )
     return sent_messages
 
