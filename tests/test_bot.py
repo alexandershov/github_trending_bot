@@ -236,14 +236,28 @@ def test_telegram_api_get_messages():
 
 
 @pytest.mark.parametrize('mock_kwargs', [
+    # requests raises
     {
         'body': requests.Timeout('mock timeout'),
     },
+    # not a json
     {
         'body': 'not a json',
     },
+    # bad result type
     {
         'json': {'result': 9},
+    },
+    # message misses required fields
+    {
+        'json': {
+            'result': [
+                {
+                    'message': {}
+                }
+            ]
+            ,
+        },
     },
 ])
 @responses.activate

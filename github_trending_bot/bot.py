@@ -345,20 +345,39 @@ class TelegramApi:
         result = _get_or_raise(response_data, 'result', list, TelegramApiError)
         logging.info('got response %s', response_data)
         messages = [
-            Message(
-                update_id=item['update_id'],
-                chat_id=item['message']['chat']['id'],
-                message_id=item['message']['message_id'],
-                text=item['message']['text'],
-            )
+            _make_message_from_api_item(item)
             for item in result
-            if item.get('message', {}).get('text', '').startswith('/show')
+            if _is_message(item)
             ]
         logging.info('got %d updates from telegram', len(messages))
         return messages
 
-    def _get_method_url(self, method_name):
+    def _get_method_url(self, method_name: str) -> str:
         return urlparse.urljoin(
             f'https://api.telegram.org/bot{self.token}/',
             method_name,
         )
+
+
+def _is_message(item: tp.Mapping) -> bool:
+    try:
+        _get_or_raise(item, 'message', dict, ValueError)
+    except ValueError:
+        return False
+    else:
+        return True
+
+
+def _make_message_from_api_item(item: tp.Mapping) -> Message:
+    """
+    :raises TelegramApiError:
+    """
+    assert _is_message(item)
+    message_item = _get_or_raise(item, 'message', dict, TelegramApiError)
+    chat_item = _get_or_raise(message_item, 'chat', dict, TelegramApiError)
+    return Message(
+        update_id=_get_or_raise(item, 'update_id', int, TelegramApiError),
+        chat_id=_get_or_raise(chat_item, 'id', int, TelegramApiError),
+        message_id=_get_or_raise(message_item, 'message_id', int, TelegramApiError),
+        text=_get_or_raise(message_item, 'text', str, TelegramApiError),
+    )
