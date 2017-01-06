@@ -195,6 +195,8 @@ def main(offset_state=None):
                         )
                 try:
                     message_text = commands_executor.execute(parsed_message)
+                except InvalidCommand as exc:
+                    message_text = str(exc)
                 except Error:
                     logging.error(f'got an error when executing {parsed_message!r}')
                     message_text = 'oops, something went wrong'
@@ -411,8 +413,12 @@ class CommandsExecutor:
         self.commands_by_name = commands_by_name
 
     def execute(self, parsed_message: ParsedMessage) -> str:
-        command = self.commands_by_name[parsed_message.name]
-        return command(parsed_message.args)
+        try:
+            command = self.commands_by_name[parsed_message.name]
+        except KeyError:
+            raise InvalidCommand(f'unknown command {parsed_message.name}, type `/help`')
+        else:
+            return command(parsed_message.args)
 
 
 class GithubShowCommand:
