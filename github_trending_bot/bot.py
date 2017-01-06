@@ -14,13 +14,21 @@ import requests
 # TODO: refactoring
 # TODO: remove magic constants
 
+HELP_COMMAND = '/help'
+START_COMMAND = '/start'
+SHOW_COMMAND = '/show'
+ECHO_COMMAND = '/echo'
+
 OFFSET_PATH = '/tmp/github_trending_last_update'
+
+GITHUB_API_BASE = 'https://api.github.com'
 DEFAULT_GITHUB_API_TIMEOUT = 5  # seconds
-DEFAULT_TELEGRAM_API_TIMEOUT = 60  # seconds
 GITHUB_CACHE_TTL = 600  # seconds
 DEFAULT_AGE_IN_DAYS = 7
+
+DEFAULT_TELEGRAM_API_TIMEOUT = 60  # seconds
 TELEGRAM_UPDATES_LIMIT = 5  # items in an array
-HELP_TEXT = '/show [DAYS] - show trending repositories created in the last DAYS'
+HELP_TEXT = f'{HELP_COMMAND} [DAYS] - show trending repositories created in the last DAYS'
 
 
 class Error(Exception):
@@ -137,7 +145,7 @@ class GithubApi:
             'Accept': 'application/vnd.github.v3+json',
         }
         created_after_str = created_after.replace(microsecond=0).isoformat()
-        url = 'https://api.github.com/search/repositories'
+        url = urlparse.urljoin(GITHUB_API_BASE, '/search/repositories')
         params = {
             'q': f'created:>{created_after_str}',
             'sort': 'stars',
@@ -221,29 +229,27 @@ def main(offset_state=None):
             time.sleep(10)
             continue
 
-        if updates:
-            for update in updates:
-                parsed_message = _get_parsed_message(update)
-                try:
-                    message_text = commands_executor.execute(parsed_message)
-                except InvalidCommand as exc:
-                    message_text = str(exc)
-                except Error:
-                    logging.error(f'got an error when executing {parsed_message!r}', exc_info=True)
-                    message_text = 'oops, something went wrong'
-                try:
-                    telegram_api.send_message(
-                        chat_id=update.message.chat_id,
-                        text=message_text,
-                        parse_mode='HTML',
-                        disable_web_page_preview=True,
-                        disable_notification=True,
-                    )
-                except TelegramApiError:
-                    logging.error('could not get send message to telegram, sleeping 10 seconds ...', exc_info=True)
-                    time.sleep(10)
-
-            offset_state.offset = _get_next_offset(updates)
+        for update in updates:
+            parsed_message = _get_parsed_message(update)
+            try:
+                message_text = commands_executor.execute(parsed_message)
+            except InvalidCommand as exc:
+                message_text = str(exc)
+            except Error:
+                logging.error(f'got an error when executing {parsed_message!r}', exc_info=True)
+                message_text = 'oops, something went wrong'
+            try:
+                telegram_api.send_message(
+                    chat_id=update.message.chat_id,
+                    text=message_text,
+                    parse_mode='HTML',
+                    disable_web_page_preview=True,
+                    disable_notification=True,
+                )
+            except TelegramApiError:
+                logging.error('could not get send message to telegram, sleeping 10 seconds ...', exc_info=True)
+                time.sleep(10)
+        offset_state.offset = _get_next_offset(offset_state, updates)
 
 
 def _get_commands_executor(config: Config) -> CommandsExecutor:
@@ -273,10 +279,6 @@ def _get_parsed_message(update: Update) -> ParsedMessage:
     return parsed_message
 
 
-def _get_next_offset(bot_updates: tp.List[Update]) -> int:
-    return max(update.update_id for update in bot_updates) + 1
-
-
 class FileOffsetState:
     def __init__(self, path):
         self.path = path
@@ -290,6 +292,12 @@ class FileOffsetState:
     def offset(self, offset: int):
         with open(self.path, 'w') as fileobj:
             fileobj.write(str(offset))
+
+
+def _get_next_offset(offset_state: FileOffsetState, bot_updates: tp.List[Update]) -> int:
+    if not bot_updates:
+        return offset_state.offset
+    return max(update.update_id for update in bot_updates) + 1
 
 
 @contextmanager
