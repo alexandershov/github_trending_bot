@@ -397,9 +397,24 @@ class _DummyOffsetState:
 @pytest.mark.parametrize('update_texts, expected_text, expected_offset_state', [
     (
         [
-            '/show'
+            '/show',
         ],
         '<a href="http://example.com">some_name 7</a> - some_description',
+        4,
+    ),
+    (
+        [
+            '/show 3',
+        ],
+        '<a href="http://example.com">some_name 3</a> - some_description',
+        4,
+    ),
+    (
+        [
+            '/help',
+            '/start'
+        ],
+        bot.HELP_TEXT,
         4,
     ),
 ])
