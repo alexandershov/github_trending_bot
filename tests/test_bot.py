@@ -419,6 +419,9 @@ def test_main(monkeypatch, updates, expected_text, expected_offset_state):
     for (update, (args, kwargs)) in zip(updates, sent_messages):
         assert kwargs['chat_id'] == update.message.chat_id
         assert kwargs['text'] == expected_text
+        assert kwargs['parse_mode'] == 'HTML'
+        assert kwargs['disable_web_page_preview']
+        assert kwargs['disable_notification']
     assert offset_state.offset == expected_offset_state
 
 
