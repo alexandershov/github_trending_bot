@@ -11,9 +11,6 @@ from contextlib import contextmanager
 from cachetools.func import ttl_cache
 import requests
 
-# TODO: refactoring
-# TODO: remove magic constants
-
 HELP_COMMAND = '/help'
 START_COMMAND = '/start'
 SHOW_COMMAND = '/show'
