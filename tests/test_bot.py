@@ -229,7 +229,7 @@ def test_telegram_api_get_updates(message_item, expected_update_id, expected_cha
         },
     )
     api = bot.TelegramApi('some_telegram_token')
-    messages = api.get_updates(
+    updates = api.get_updates(
         offset=1,
         limit=2,
         timeout=3,
@@ -245,9 +245,10 @@ def test_telegram_api_get_updates(message_item, expected_update_id, expected_cha
             'timeout': 3,
         }
     )
-    assert len(messages) == 1
-    message = messages[0]
-    assert message.update_id == expected_update_id
+    assert len(updates) == 1
+    update = updates[0]
+    message = update.message
+    assert update.update_id == expected_update_id
     assert message.chat_id == expected_chat_id
     assert message.message_id == expected_message_id
     assert message.text == expected_text

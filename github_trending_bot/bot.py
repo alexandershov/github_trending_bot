@@ -50,16 +50,13 @@ class Config:
 
 
 class Update:
-    def __init__(self, telegram_id: int, chat_id: int, message_id: int, age_in_days: int):
-        self.telegram_id = telegram_id
-        self.chat_id = chat_id
-        self.message_id = message_id
-        self.age_in_days = age_in_days
+    def __init__(self, update_id, message):
+        self.update_id = update_id
+        self.message = message
 
 
 class Message:
-    def __init__(self, update_id: int, chat_id: int, message_id: int, text: str):
-        self.update_id = update_id
+    def __init__(self, chat_id: int, message_id: int, text: str):
         self.chat_id = chat_id
         self.message_id = message_id
         self.text = text
@@ -322,7 +319,7 @@ class TelegramApi:
             response = requests.post(url, json=params, timeout=self.timeout)
             response.raise_for_status()
 
-    def get_updates(self, offset: int, limit: int, timeout: int) -> tp.List[Message]:
+    def get_updates(self, offset: int, limit: int, timeout: int) -> tp.List[Update]:
         """
         :raises TelegramApiError:
         """
@@ -343,13 +340,12 @@ class TelegramApi:
             raise TelegramApiError(f"can't convert {response.text!r} to json") from exc
         result = _get_or_raise(response_data, 'result', list, TelegramApiError)
         logging.info('got response %s', response_data)
-        messages = [
-            _make_message_from_api_item(item)
+        updates = [
+            _make_update_from_api_item(item)
             for item in result
-            if _is_message(item)
             ]
-        logging.info('got %d updates from telegram', len(messages))
-        return messages
+        logging.info('got %d updates from telegram', len(updates))
+        return updates
 
     def _get_method_url(self, method_name: str) -> str:
         return urlparse.urljoin(
@@ -358,29 +354,45 @@ class TelegramApi:
         )
 
 
-def _is_message(item: tp.Mapping) -> bool:
+def _is_message(update_item: tp.Mapping) -> bool:
     try:
-        _get_or_raise(item, 'message', dict, ValueError)
+        _get_or_raise(update_item, 'message', dict, ValueError)
     except ValueError:
         return False
     else:
         return True
 
 
-def _make_message_from_api_item(item: tp.Mapping) -> Message:
+def _make_update_from_api_item(item: tp.Mapping) -> Update:
     """
     :raises TelegramApiError:
     """
-    assert _is_message(item)
-    message_item = _get_or_raise(item, 'message', dict, TelegramApiError)
-    chat_item = _get_or_raise(message_item, 'chat', dict, TelegramApiError)
+    update_id = _get_or_raise(item, 'update_id', int, TelegramApiError)
+    try:
+        message = _make_message_from_api_item(item)
+    except ValueError:
+        logging.error("can't parse %r into message", item)
+        message = None
+    return Update(
+        update_id=update_id,
+        message=message,
+    )
+
+
+def _make_message_from_api_item(item: tp.Mapping) -> tp.Union[Message, None]:
+    """
+    :raises ValueError: When can't parse item as a Message
+    """
+    if not _is_message(item):
+        return None
+    message_item = _get_or_raise(item, 'message', dict, ValueError)
+    chat_item = _get_or_raise(message_item, 'chat', dict, ValueError)
     if 'text' not in message_item:
         text = ''
     else:
-        text = _get_or_raise(message_item, 'text', str, TelegramApiError)
+        text = _get_or_raise(message_item, 'text', str, ValueError)
     return Message(
-        update_id=_get_or_raise(item, 'update_id', int, TelegramApiError),
-        chat_id=_get_or_raise(chat_item, 'id', int, TelegramApiError),
-        message_id=_get_or_raise(message_item, 'message_id', int, TelegramApiError),
+        chat_id=_get_or_raise(chat_item, 'id', int, ValueError),
+        message_id=_get_or_raise(message_item, 'message_id', int, ValueError),
         text=text,
     )
