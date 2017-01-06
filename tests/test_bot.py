@@ -212,7 +212,9 @@ def test_telegram_api_get_messages():
         'https://api.telegram.org/botsome_telegram_token/getUpdates',
         json={
             'result': [
-                _make_message_item(1, 2, 3, '/show')
+                _make_message_item(1, 2, 3, '/show'),
+                # missing text is legal
+                _make_message_item(4, 5, 6),
             ]
         },
     )
@@ -233,12 +235,17 @@ def test_telegram_api_get_messages():
             'timeout': 3,
         }
     )
-    assert len(messages) == 1
-    message = messages[0]
-    assert message.update_id == 1
-    assert message.chat_id == 2
-    assert message.message_id == 3
-    assert message.text == '/show'
+    assert len(messages) == 2
+    first = messages[0]
+    assert first.update_id == 1
+    assert first.chat_id == 2
+    assert first.message_id == 3
+    assert first.text == '/show'
+    second = messages[1]
+    assert second.update_id == 4
+    assert second.chat_id == 5
+    assert second.message_id == 6
+    assert second.text == ''
 
 
 @pytest.mark.parametrize('mock_kwargs', [

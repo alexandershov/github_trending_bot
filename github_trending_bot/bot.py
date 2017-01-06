@@ -375,9 +375,13 @@ def _make_message_from_api_item(item: tp.Mapping) -> Message:
     assert _is_message(item)
     message_item = _get_or_raise(item, 'message', dict, TelegramApiError)
     chat_item = _get_or_raise(message_item, 'chat', dict, TelegramApiError)
+    if 'text' not in message_item:
+        text = ''
+    else:
+        text = _get_or_raise(message_item, 'text', str, TelegramApiError)
     return Message(
         update_id=_get_or_raise(item, 'update_id', int, TelegramApiError),
         chat_id=_get_or_raise(chat_item, 'id', int, TelegramApiError),
         message_id=_get_or_raise(message_item, 'message_id', int, TelegramApiError),
-        text=_get_or_raise(message_item, 'text', str, TelegramApiError),
+        text=text,
     )
