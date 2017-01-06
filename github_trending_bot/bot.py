@@ -108,7 +108,7 @@ class GithubApi:
         except ValueError as exc:
             raise GithubApiError(f"can't convert {response.text!r} to json") from exc
         items = _get_or_raise(response_data, 'items', list, GithubApiError)
-        logging.info('got %d repositories from github: %r', len(items), items)
+        logging.info('got %d repositories from github', len(items))
         return [
             _make_repo_from_api_item(one_item)
             for one_item in items
