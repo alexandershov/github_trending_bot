@@ -5,6 +5,7 @@ import os
 import sys
 import typing as tp
 import urllib.parse as urlparse
+from contextlib import contextmanager
 
 import requests
 
@@ -62,8 +63,6 @@ class Message:
         self.chat_id = chat_id
         self.message_id = message_id
         self.text = text
-
-
 
 
 def _get_age_in_days(item):
@@ -252,6 +251,14 @@ def _save_offset(offset: int):
         fileobj.write(str(offset))
 
 
+@contextmanager
+def _convert_exceptions(from_exception_class, to_exception_class):
+    try:
+        yield
+    except from_exception_class as exc:
+        raise to_exception_class from exc
+
+
 def _get_or_invalid_config(environment: tp.Mapping[str, str], key: str) -> str:
     """
     :raises InvalidConfig: When `key` is missing from `environment`.
@@ -325,8 +332,9 @@ class TelegramApi:
             limit=limit,
         )
         logging.info('getting updates from telegram ...')
-        response = requests.post(url, json=params, timeout=self.timeout)
-        response.raise_for_status()
+        with _convert_exceptions(requests.RequestException, TelegramApiError):
+            response = requests.post(url, json=params, timeout=self.timeout)
+            response.raise_for_status()
         logging.info('got response %s', response.json())
         messages = [
             Message(

@@ -3,6 +3,7 @@ import json
 import urllib.parse as urlparse
 
 import pytest
+import requests
 import responses
 
 from github_trending_bot import bot
@@ -221,6 +222,26 @@ def test_telegram_api_get_messages():
     assert message.text == '/show'
     assert message.update_id == 3
 
+
+@pytest.mark.parametrize('mock_kwargs', [
+    {
+        'body': requests.Timeout('mock timeout'),
+    }
+])
+@responses.activate
+def test_telegram_api_get_messages_error_handling(mock_kwargs):
+    responses.add(
+        responses.POST,
+        'https://api.telegram.org/botsome_telegram_token/getUpdates',
+        **mock_kwargs
+    )
+    api = bot.TelegramApi('some_telegram_token')
+    with pytest.raises(bot.TelegramApiError):
+        api.get_messages(
+            offset=1,
+            limit=2,
+            timeout=3,
+        )
 
 def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
