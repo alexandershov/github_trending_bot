@@ -379,6 +379,7 @@ def test_github_show_command_error_handling(args):
 class _BreakFromInfiniteLoop(Exception):
     pass
 
+
 class _DummyOffsetState:
     def __init__(self):
         self._offset = 0
@@ -393,15 +394,31 @@ class _DummyOffsetState:
         raise _BreakFromInfiniteLoop
 
 
-def test_main(monkeypatch):
-    sent_messages = _monkeypatch_for_main(monkeypatch)
+@pytest.mark.parametrize('updates, expected_offset_state', [
+    (
+        [
+            bot.Update(
+                update_id=3,
+                message=bot.Message(
+                    chat_id=1,
+                    message_id=2,
+                    text='/show'
+                )
+            )
+        ],
+        4,
+    ),
+])
+def test_main(monkeypatch, updates, expected_offset_state):
+    sent_messages = _monkeypatch_for_main(monkeypatch, updates)
     offset_state = _DummyOffsetState()
     with pytest.raises(_BreakFromInfiniteLoop):
         bot.main(offset_state=offset_state)
-    assert len(sent_messages) == 1
+    assert len(sent_messages) == len(updates)
+    assert offset_state.offset == expected_offset_state
 
 
-def _monkeypatch_for_main(monkeypatch):
+def _monkeypatch_for_main(monkeypatch, updates):
     sent_messages = []
     monkeypatch.setattr(
         bot,
@@ -416,19 +433,11 @@ def _monkeypatch_for_main(monkeypatch):
             'TELEGRAM_TOKEN': 'some_telegram_token',
         }
     )
-    message = bot.Message(
-        chat_id=1,
-        message_id=2,
-        text='/show'
-    )
-    update = bot.Update(
-        update_id=3,
-        message=message,
-    )
+
     monkeypatch.setattr(
         bot.TelegramApi,
         'get_updates',
-        lambda self, offset, limit, timeout: [update]
+        lambda self, offset, limit, timeout: updates
     )
     monkeypatch.setattr(
         bot.TelegramApi,
