@@ -205,16 +205,26 @@ def _make_message_item(update_id, chat_id, message_id, text=None):
     return result
 
 
+@pytest.mark.parametrize('message_item, expected_update_id, expected_chat_id, expected_message_id, expected_text', [
+    (
+        _make_message_item(1, 2, 3, '/show'),
+        1, 2, 3, '/show',
+    ),
+    # missing text
+    (
+        _make_message_item(1, 2, 3),
+        1, 2, 3, '',
+    ),
+])
 @responses.activate
-def test_telegram_api_get_messages():
+def test_telegram_api_get_messages(message_item, expected_update_id, expected_chat_id, expected_message_id,
+                                   expected_text):
     responses.add(
         responses.POST,
         'https://api.telegram.org/botsome_telegram_token/getUpdates',
         json={
             'result': [
-                _make_message_item(1, 2, 3, '/show'),
-                # missing text is legal
-                _make_message_item(4, 5, 6),
+                message_item
             ]
         },
     )
@@ -235,17 +245,12 @@ def test_telegram_api_get_messages():
             'timeout': 3,
         }
     )
-    assert len(messages) == 2
-    first = messages[0]
-    assert first.update_id == 1
-    assert first.chat_id == 2
-    assert first.message_id == 3
-    assert first.text == '/show'
-    second = messages[1]
-    assert second.update_id == 4
-    assert second.chat_id == 5
-    assert second.message_id == 6
-    assert second.text == ''
+    assert len(messages) == 1
+    message = messages[0]
+    assert message.update_id == expected_update_id
+    assert message.chat_id == expected_chat_id
+    assert message.message_id == expected_message_id
+    assert message.text == expected_text
 
 
 @pytest.mark.parametrize('mock_kwargs', [
