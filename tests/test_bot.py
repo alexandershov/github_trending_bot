@@ -313,6 +313,7 @@ def test_parse_message_text(text, expected_name, expected_args):
     assert parsed.name == expected_name
     assert parsed.args == expected_args
 
+
 def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
 
