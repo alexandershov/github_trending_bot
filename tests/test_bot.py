@@ -178,30 +178,40 @@ def test_telegram_api_send_message_bad_status():
 
 
 @responses.activate
-def test_telegram_api_get_updates():
+def test_telegram_api_get_messages():
     responses.add(
         responses.POST,
         'https://api.telegram.org/botsome_telegram_token/getUpdates',
+        json={
+            'result': [
+                {
+                    'message': {
+                        'chat': {
+                            'id': 1
+                        },
+                        'message_id': 2,
+                        'text': '/show',
+                    },
+                    'update_id': 3,
+                }
+            ]
+        },
     )
     api = bot.TelegramApi('some_telegram_token')
-    updates = api.get_updates(
-        chat_id=99,
-        text='<b>some_text</b>',
-        parse_mode='HTML',
-        disable_web_page_preview=True,
-        disable_notification=True,
+    messages = api.get_messages(
+        offset=1,
+        limit=2,
+        timeout=3,
     )
     assert (len(responses.calls) == 1)
     call = responses.calls[0]
     _assert_requests_call(
         call,
-        expected_url='https://api.telegram.org/botsome_telegram_token/sendMessage',
+        expected_url='https://api.telegram.org/botsome_telegram_token/getUpdates',
         expected_json_payload={
-            'chat_id': 99,
-            'text': '<b>some_text</b>',
-            'parse_mode': 'HTML',
-            'disable_web_page_preview': True,
-            'disable_notification': True,
+            'offset': 1,
+            'limit': 2,
+            'timeout': 3,
         }
     )
 

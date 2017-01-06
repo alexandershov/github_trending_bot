@@ -305,3 +305,28 @@ class TelegramApi:
             response.raise_for_status()
         except requests.HTTPError as exc:
             raise TelegramApiError(f'got error during call to telegram api: {exc!r}')
+
+    def get_messages(self, offset: int, limit: int, timeout: int) -> tp.List[Update]:
+        # TODO: dry url with send_message
+        url = f'https://api.telegram.org/bot{self.token}/getUpdates'
+        params = dict(
+            offset=offset,
+            timeout=timeout,
+            limit=limit,
+        )
+        logging.info('getting updates from telegram ...')
+        response = requests.post(url, json=params, timeout=self.timeout)
+        response.raise_for_status()
+        logging.info('got response %s', response.json())
+        updates = [
+            Update(
+                telegram_id=item['update_id'],
+                chat_id=item['message']['chat']['id'],
+                message_id=item['message']['message_id'],
+                age_in_days=_get_age_in_days(item),
+            )
+            for item in response.json()['result']
+            if item.get('message', {}).get('text', '').startswith('/show')
+            ]
+        logging.info('got %d updates from telegram', len(updates))
+        return updates
