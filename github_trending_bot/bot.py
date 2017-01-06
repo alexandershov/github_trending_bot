@@ -10,13 +10,8 @@ from contextlib import contextmanager
 
 import requests
 
-# TODO: tests
 # TODO: refactoring
-# TODO: /help
-# TODO: /start
-# TODO error handling
 # TODO: github caching
-# TODO: integration test
 # TODO: remove magic constants
 
 
