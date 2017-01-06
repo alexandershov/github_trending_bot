@@ -342,6 +342,7 @@ class TelegramApi:
             response_data = response.json()
         except ValueError as exc:
             raise TelegramApiError(f"can't convert {response.text!r} to json") from exc
+        result = _get_or_raise(response_data, 'result', list, TelegramApiError)
         logging.info('got response %s', response_data)
         messages = [
             Message(
@@ -350,7 +351,7 @@ class TelegramApi:
                 message_id=item['message']['message_id'],
                 text=item['message']['text'],
             )
-            for item in response_data['result']
+            for item in result
             if item.get('message', {}).get('text', '').startswith('/show')
             ]
         logging.info('got %d updates from telegram', len(messages))

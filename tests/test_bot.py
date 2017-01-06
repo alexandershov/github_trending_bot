@@ -242,6 +242,9 @@ def test_telegram_api_get_messages():
     {
         'body': 'not a json',
     },
+    {
+        'json': {'result': 9},
+    },
 ])
 @responses.activate
 def test_telegram_api_get_messages_error_handling(mock_kwargs):
