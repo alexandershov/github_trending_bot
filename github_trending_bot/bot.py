@@ -12,7 +12,6 @@ from cachetools.func import ttl_cache
 import requests
 
 # TODO: refactoring
-# TODO: github caching
 # TODO: remove magic constants
 
 
