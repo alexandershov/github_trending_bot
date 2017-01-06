@@ -419,3 +419,12 @@ def parse_message_text(text: str) -> ParsedMessage:
         name=splitted[0],
         args=splitted[1:],
     )
+
+
+class CommandsExecutor:
+    def __init__(self, commands_by_name: tp.Mapping) -> None:
+        self.commands_by_name = commands_by_name
+
+    def execute(self, parsed_message: ParsedMessage) -> str:
+        command = self.commands_by_name[parsed_message.name]
+        return command(parsed_message.args)

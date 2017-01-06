@@ -319,6 +319,22 @@ def test_parse_message_text_error():
         bot.parse_message_text('')
 
 
+@pytest.mark.parametrize('name', [
+    '/help',
+    '/start',
+])
+def test_run_help_command(name):
+    parsed_message = bot.ParsedMessage(
+        name=name,
+        args=[],
+    )
+    commands = bot.CommandsExecutor({
+        '/help': lambda _: 'some_help_text',
+        '/start': lambda _: 'some_help_text',
+    })
+    assert commands.execute(parsed_message) == 'some_help_text'
+
+
 def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
 
