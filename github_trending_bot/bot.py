@@ -396,3 +396,17 @@ def _make_message_from_api_item(item: tp.Mapping) -> tp.Union[Message, None]:
         message_id=_get_or_raise(message_item, 'message_id', int, ValueError),
         text=text,
     )
+
+
+class ParsedMessage:
+    def __init__(self, name, args):
+        self.name = name
+        self.args = args
+
+
+def parse_message_text(text):
+    splitted = text.split(' ')
+    return ParsedMessage(
+        name=splitted[0],
+        args=splitted[1:],
+    )

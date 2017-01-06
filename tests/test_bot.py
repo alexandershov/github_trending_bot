@@ -304,6 +304,15 @@ def test_telegram_api_get_updates_error_handling(mock_kwargs):
         )
 
 
+@pytest.mark.parametrize('text, expected_name, expected_args', [
+    ('/help', '/help', []),
+    ('/show 1', '/show', ['1']),
+])
+def test_parse_message_text(text, expected_name, expected_args):
+    parsed = bot.parse_message_text(text)
+    assert parsed.name == expected_name
+    assert parsed.args == expected_args
+
 def _get_http_get_params(parse_result):
     return dict(urlparse.parse_qsl(parse_result.query))
 
