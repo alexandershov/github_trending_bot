@@ -20,7 +20,10 @@
     copy: src=github_trending_bot.service dest=/lib/systemd/system/github_trending_bot.service
 
   - name: installing python package
-    pip: name=git+https://github.com/alexandershov/github_trending_bot
+    pip:
+      name: git+https://github.com/alexandershov/github_trending_bot.git
+      executable: pip3.6
+      editable: false
 
   - name: ensure service is started
     service: name=github_trending_bot state=started
