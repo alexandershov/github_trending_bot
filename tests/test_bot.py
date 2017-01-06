@@ -205,20 +205,27 @@ def _make_message_item(update_id, chat_id, message_id, text=None):
     return result
 
 
-@pytest.mark.parametrize('message_item, expected_update_id, expected_chat_id, expected_message_id, expected_text', [
+@pytest.mark.parametrize('message_item, expected_update_id, expected_message', [
     (
         _make_message_item(1, 2, 3, '/show'),
-        1, 2, 3, '/show',
+        1,
+        bot.Message(2, 3, '/show'),
     ),
     # missing text
     (
         _make_message_item(1, 2, 3),
-        1, 2, 3, '',
+        1,
+        bot.Message(2, 3, ''),
+    ),
+    # malformed message
+    (
+        {'update_id': 1},
+        1,
+        None,
     ),
 ])
 @responses.activate
-def test_telegram_api_get_updates(message_item, expected_update_id, expected_chat_id, expected_message_id,
-                                  expected_text):
+def test_telegram_api_get_updates(message_item, expected_update_id, expected_message):
     responses.add(
         responses.POST,
         'https://api.telegram.org/botsome_telegram_token/getUpdates',
@@ -249,9 +256,12 @@ def test_telegram_api_get_updates(message_item, expected_update_id, expected_cha
     update = updates[0]
     message = update.message
     assert update.update_id == expected_update_id
-    assert message.chat_id == expected_chat_id
-    assert message.message_id == expected_message_id
-    assert message.text == expected_text
+    if expected_message is not None:
+        assert message.chat_id == expected_message.chat_id
+        assert message.message_id == expected_message.message_id
+        assert message.text == expected_message.text
+    else:
+        assert message is None
 
 
 @pytest.mark.parametrize('mock_kwargs', [
@@ -272,14 +282,14 @@ def test_telegram_api_get_updates(message_item, expected_update_id, expected_cha
         'json': {
             'result': [
                 {
-                    'message': {}
+                    'message': {},
                 }
             ]
         },
     },
 ])
 @responses.activate
-def test_telegram_api_get_messages_error_handling(mock_kwargs):
+def test_telegram_api_get_updatesj_error_handling(mock_kwargs):
     responses.add(
         responses.POST,
         'https://api.telegram.org/botsome_telegram_token/getUpdates',

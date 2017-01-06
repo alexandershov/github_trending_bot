@@ -17,7 +17,7 @@ import requests
 # TODO: github caching
 # TODO: integration test
 # TODO: remove magic constants
-# TODO: catch all `requests` exceptions
+
 
 PATH = '/tmp/github_trending_last_update'
 DEFAULT_API_TIMEOUT = 5
