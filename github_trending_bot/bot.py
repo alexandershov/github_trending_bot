@@ -304,7 +304,10 @@ class TelegramApi:
 
     def send_message(
         self, chat_id: int, text: str, parse_mode: str = '',
-        disable_web_page_preview: bool = False, disable_notification: bool = False):
+        disable_web_page_preview: bool = False, disable_notification: bool = False) -> None:
+        """
+        :raises TelegramApiError:
+        """
         if not text:
             return
         url = self._get_method_url('sendMessage')
@@ -325,6 +328,9 @@ class TelegramApi:
             raise TelegramApiError(f'got error during call to telegram api: {exc!r}')
 
     def get_messages(self, offset: int, limit: int, timeout: int) -> tp.List[Message]:
+        """
+        :raises TelegramApiError:
+        """
         url = self._get_method_url('getUpdates')
         params = dict(
             offset=offset,
