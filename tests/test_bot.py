@@ -394,7 +394,7 @@ class _DummyOffsetState:
         raise _BreakFromInfiniteLoop
 
 
-@pytest.mark.parametrize('updates, expected_offset_state', [
+@pytest.mark.parametrize('updates, expected_text, expected_offset_state', [
     (
         [
             bot.Update(
@@ -406,15 +406,19 @@ class _DummyOffsetState:
                 )
             )
         ],
+        '<a href="http://example.com">some_name 7</a> - some_description',
         4,
     ),
 ])
-def test_main(monkeypatch, updates, expected_offset_state):
+def test_main(monkeypatch, updates, expected_text, expected_offset_state):
     sent_messages = _monkeypatch_for_main(monkeypatch, updates)
     offset_state = _DummyOffsetState()
     with pytest.raises(_BreakFromInfiniteLoop):
         bot.main(offset_state=offset_state)
     assert len(sent_messages) == len(updates)
+    for (update, (args, kwargs)) in zip(updates, sent_messages):
+        assert kwargs['chat_id'] == update.message.chat_id
+        assert kwargs['text'] == expected_text
     assert offset_state.offset == expected_offset_state
 
 
