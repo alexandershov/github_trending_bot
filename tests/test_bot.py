@@ -239,6 +239,9 @@ def test_telegram_api_get_messages():
     {
         'body': requests.Timeout('mock timeout'),
     },
+    {
+        'body': 'not a json',
+    },
 ])
 @responses.activate
 def test_telegram_api_get_messages_error_handling(mock_kwargs):

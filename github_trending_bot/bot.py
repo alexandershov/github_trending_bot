@@ -155,7 +155,7 @@ class GithubApi:
         try:
             response_data = response.json()
         except ValueError as exc:
-            raise GithubApiError(f"can't convert {response.text!r} to json: {exc!r}")
+            raise GithubApiError(f"can't convert {response.text!r} to json") from exc
         items = _get_or_raise(response_data, 'items', list, GithubApiError)
         return [
             _make_repo_from_api_item(one_item)
@@ -337,7 +337,12 @@ class TelegramApi:
         with _convert_exceptions(requests.RequestException, TelegramApiError):
             response = requests.post(url, json=params, timeout=self.timeout)
             response.raise_for_status()
-        logging.info('got response %s', response.json())
+        # TODO: dry with github
+        try:
+            response_data = response.json()
+        except ValueError as exc:
+            raise TelegramApiError(f"can't convert {response.text!r} to json") from exc
+        logging.info('got response %s', response_data)
         messages = [
             Message(
                 update_id=item['update_id'],
@@ -345,7 +350,7 @@ class TelegramApi:
                 message_id=item['message']['message_id'],
                 text=item['message']['text'],
             )
-            for item in response.json()['result']
+            for item in response_data['result']
             if item.get('message', {}).get('text', '').startswith('/show')
             ]
         logging.info('got %d updates from telegram', len(messages))
