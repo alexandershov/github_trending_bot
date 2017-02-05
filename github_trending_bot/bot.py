@@ -16,7 +16,7 @@ START_COMMAND = '/start'
 SHOW_COMMAND = '/show'
 ECHO_COMMAND = '/echo'
 
-OFFSET_PATH = '/tmp/github_trending_last_update'
+OFFSET_PATH = '/var/lib/github_trending_bot/last_update'
 
 GITHUB_API_BASE = 'https://api.github.com'
 DEFAULT_GITHUB_API_SOCKET_TIMEOUT = 5  # seconds
@@ -240,6 +240,7 @@ def main(offset_state=None):
                 logging.error(f'got an error when executing {parsed_message!r}', exc_info=True)
                 message_text = 'oops, something went wrong'
             try:
+                continue
                 telegram_api.send_message(
                     chat_id=update.message.chat_id,
                     text=message_text,
