@@ -240,7 +240,6 @@ def main(offset_state=None):
                 logging.error(f'got an error when executing {parsed_message!r}', exc_info=True)
                 message_text = 'oops, something went wrong'
             try:
-                continue
                 telegram_api.send_message(
                     chat_id=update.message.chat_id,
                     text=message_text,
