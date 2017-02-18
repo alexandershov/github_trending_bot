@@ -150,7 +150,7 @@ class TimestampCommand:
                 naive_d_time = dt.datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%S')
             except ValueError:
                 raise InvalidCommand(TimestampCommand._USAGE_STRING)
-        return str(naive_d_time.replace(tzinfo=dt.timezone.utc).timestamp())
+        return str(int(naive_d_time.replace(tzinfo=dt.timezone.utc).timestamp()))
 
     def _validate_args(self, args):
         if len(args) > 1:
