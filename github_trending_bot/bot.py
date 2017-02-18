@@ -77,11 +77,12 @@ class Update:
 
 
 class Repo:
-    def __init__(self, name: str, description: str, html_url: str, language: tp.Optional[str]):
+    def __init__(self, name: str, description: str, html_url: str, language: tp.Optional[str], stargazers_count: int):
         self.name = name
         self.description = description
         self.html_url = html_url
         self.language = language
+        self.stargazers_count = stargazers_count
 
 
 class ParsedMessage:
@@ -176,6 +177,7 @@ def _make_repo_from_api_item(item) -> Repo:
         description=(_get_or_raise(item, 'description', (str, type(None)), GithubApiError)) or '',
         html_url=_get_or_raise(item, 'html_url', str, GithubApiError),
         language=_get_or_raise(item, 'language', (str, type(None)), GithubApiError),
+        stargazers_count=_get_or_raise(item, 'stargazers_count', int, GithubApiError),
     )
 
 

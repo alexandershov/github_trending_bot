@@ -43,6 +43,7 @@ def test_github_api_find_trending_repositories():
                     'description': 'some_description',
                     'html_url': 'http://example.com',
                     'language': 'Python',
+                    'stargazers_count': 3
                 }
             ]
         }
@@ -74,6 +75,7 @@ def test_github_api_find_trending_repositories():
     assert repo.description == 'some_description'
     assert repo.html_url == 'http://example.com'
     assert repo.language == 'Python'
+    assert repo.stargazers_count == 3
 
 
 @pytest.mark.parametrize('mock_kwargs', [
@@ -126,13 +128,15 @@ def test_format_html_message():
             name='first_name',
             description='first_description',
             html_url='http://first.example.com',
-            language='Python'
+            language='Python',
+            stargazers_count=3,
         ),
         bot.Repo(
             name='<&second_name>',
             description='<&second_description>',
             html_url='http://\'second".example.com',
             language=None,
+            stargazers_count=2,
         ),
     ]
     actual_message = bot.format_html_message(repositories)
@@ -346,6 +350,7 @@ def _make_repo(age_in_days):
         description='some_description',
         html_url='http://example.com',
         language='Python',
+        stargazers_count=3,
     )
 
 
