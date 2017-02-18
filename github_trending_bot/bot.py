@@ -77,10 +77,11 @@ class Update:
 
 
 class Repo:
-    def __init__(self, name: str, description: str, html_url: str):
+    def __init__(self, name: str, description: str, html_url: str, language: str):
         self.name = name
         self.description = description
         self.html_url = html_url
+        self.language = language
 
 
 class ParsedMessage:
@@ -174,6 +175,7 @@ def _make_repo_from_api_item(item) -> Repo:
         name=_get_or_raise(item, 'name', str, GithubApiError),
         description=(_get_or_raise(item, 'description', (str, type(None)), GithubApiError)) or '',
         html_url=_get_or_raise(item, 'html_url', str, GithubApiError),
+        language=_get_or_raise(item, 'language', (str, type(None)), GithubApiError)
     )
 
 
