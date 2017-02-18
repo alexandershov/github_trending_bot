@@ -27,7 +27,11 @@ DEFAULT_AGE_IN_DAYS = 7
 DEFAULT_TELEGRAM_API_SOCKET_TIMEOUT = 70  # seconds
 DEFAULT_TELEGRAM_API_LONG_POLLING_TIMEOUT = 60  # seconds
 TELEGRAM_UPDATES_LIMIT = 5  # items in an array
-HELP_TEXT = f'{HELP_COMMAND} [DAYS] - show trending repositories created in the last DAYS'
+HELP_TEXT = '\n\n'.join([
+    f'{SHOW_COMMAND} [DAYS] - show trending repositories created in the last DAYS',
+    f'{TIMESTAMP_COMMAND} [%Y-%m-%dT%H:%M:%S] - convert UTC date string to Unix timestamp',
+])
+
 STAR_SYMBOL = '\u2605'
 
 
