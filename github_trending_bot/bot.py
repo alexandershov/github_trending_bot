@@ -139,7 +139,10 @@ class TimestampCommand:
             naive_d_time = dt.datetime.utcnow()
         else:
             date_string = args[0]
-            naive_d_time = dt.datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%S')
+            try:
+                naive_d_time = dt.datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%S')
+            except ValueError:
+                raise InvalidCommand('usage: /timestamp %Y-%m-%dT%H:%M:%S')
         return str(naive_d_time.replace(tzinfo=dt.timezone.utc).timestamp())
 
 

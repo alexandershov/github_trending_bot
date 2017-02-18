@@ -434,6 +434,12 @@ class _DummyOffsetState:
     ),
     (
         [
+            '/timestamp boom',
+        ],
+        'usage: /timestamp %Y-%m-%dT%H:%M:%S',
+    ),
+    (
+        [
             '/help',
             '/start',
         ],
