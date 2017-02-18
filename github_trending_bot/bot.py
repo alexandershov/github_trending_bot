@@ -27,6 +27,7 @@ DEFAULT_TELEGRAM_API_SOCKET_TIMEOUT = 70  # seconds
 DEFAULT_TELEGRAM_API_LONG_POLLING_TIMEOUT = 60  # seconds
 TELEGRAM_UPDATES_LIMIT = 5  # items in an array
 HELP_TEXT = f'{HELP_COMMAND} [DAYS] - show trending repositories created in the last DAYS'
+STAR_SYMBOL = '\u2605'
 
 
 class Error(Exception):
@@ -348,7 +349,9 @@ def format_html_message(repositories: tp.List[Repo]) -> str:
     for repo in repositories:
         part = f'<a href="{html.escape(repo.html_url)}">{html.escape(repo.name)}</a> - {html.escape(repo.description)}'
         if repo.language is not None:
-            part += f' [{html.escape(repo.language)}]'
+            part += f' [{html.escape(repo.language)} {STAR_SYMBOL}{repo.stargazers_count}]'
+        else:
+            part += f' [{STAR_SYMBOL}{repo.stargazers_count}]'
         message_parts.append(part)
     return '\n\n'.join(message_parts)
 
