@@ -15,6 +15,7 @@ HELP_COMMAND = '/help'
 START_COMMAND = '/start'
 SHOW_COMMAND = '/show'
 ECHO_COMMAND = '/echo'
+TIMESTAMP_COMMAND = '/timestamp'
 
 OFFSET_PATH = '/var/lib/github_trending_bot/last_update'
 
@@ -130,6 +131,12 @@ class GithubShowCommand:
             return int(args[0])
         except ValueError:
             raise InvalidCommand(f'{args[0]} should be an integer')
+
+
+class TimestampCommand:
+    def __call__(self, args):
+        if not args:
+            return str(dt.datetime.now(dt.timezone.utc).timestamp())
 
 
 class GithubApi:
@@ -264,6 +271,7 @@ def _get_commands_executor(config: Config) -> CommandsExecutor:
         START_COMMAND: lambda _: HELP_TEXT,
         ECHO_COMMAND: lambda args: '\n'.join(args),
         SHOW_COMMAND: GithubShowCommand(config.github_token),
+        TIMESTAMP_COMMAND: TimestampCommand(),
     }
     return CommandsExecutor(commands)
 

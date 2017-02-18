@@ -13,6 +13,7 @@ setup(
         ]
     },
     tests_require=[
+        'freezegun==0.3.8',
         'pytest==3.0.5',
         'responses==0.5.1',
     ],

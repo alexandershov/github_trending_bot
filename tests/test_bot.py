@@ -3,6 +3,7 @@ import json
 import os
 import urllib.parse as urlparse
 
+from freezegun import freeze_time
 import pytest
 import requests
 import responses
@@ -405,6 +406,7 @@ class _DummyOffsetState:
         raise _BreakFromInfiniteLoop
 
 
+@freeze_time("2017-02-18T11:55:03Z")
 @pytest.mark.parametrize('update_texts, expected_text', [
     (
         [
@@ -417,6 +419,12 @@ class _DummyOffsetState:
             '/show 3',
         ],
         f'<a href="http://example.com">some_name 3</a> - some_description [Python {bot.STAR_SYMBOL}3]',
+    ),
+    (
+        [
+            '/timestamp',
+        ],
+        '1487418903.0',
     ),
     (
         [
