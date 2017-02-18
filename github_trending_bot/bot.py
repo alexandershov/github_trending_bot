@@ -77,7 +77,7 @@ class Update:
 
 
 class Repo:
-    def __init__(self, name: str, description: str, html_url: str, language: str):
+    def __init__(self, name: str, description: str, html_url: str, language: tp.Optional[str]):
         self.name = name
         self.description = description
         self.html_url = html_url
@@ -175,7 +175,7 @@ def _make_repo_from_api_item(item) -> Repo:
         name=_get_or_raise(item, 'name', str, GithubApiError),
         description=(_get_or_raise(item, 'description', (str, type(None)), GithubApiError)) or '',
         html_url=_get_or_raise(item, 'html_url', str, GithubApiError),
-        language=_get_or_raise(item, 'language', (str, type(None)), GithubApiError)
+        language=_get_or_raise(item, 'language', (str, type(None)), GithubApiError),
     )
 
 
@@ -345,6 +345,8 @@ def format_html_message(repositories: tp.List[Repo]) -> str:
     message_parts = []
     for repo in repositories:
         part = f'<a href="{html.escape(repo.html_url)}">{html.escape(repo.name)}</a> - {html.escape(repo.description)}'
+        if repo.language is not None:
+            part += f' [{html.escape(repo.language)}]'
         message_parts.append(part)
     return '\n\n'.join(message_parts)
 

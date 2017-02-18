@@ -132,12 +132,12 @@ def test_format_html_message():
             name='<&second_name>',
             description='<&second_description>',
             html_url='http://\'second".example.com',
-            language='Python',
+            language=None,
         ),
     ]
     actual_message = bot.format_html_message(repositories)
     expected_message = (
-        '<a href="http://first.example.com">first_name</a> - first_description\n\n'
+        '<a href="http://first.example.com">first_name</a> - first_description [Python]\n\n'
         '<a href="http://&#x27;second&quot;.example.com">&lt;&amp;second_name&gt;</a> - &lt;&amp;second_description&gt;'
     )
     assert actual_message == expected_message
@@ -353,11 +353,11 @@ def _make_repo(age_in_days):
     # 7 by default
     (
         [],
-        '<a href="http://example.com">some_name 7</a> - some_description',
+        '<a href="http://example.com">some_name 7</a> - some_description [Python]',
     ),
     (
         ['1'],
-        '<a href="http://example.com">some_name 1</a> - some_description',
+        '<a href="http://example.com">some_name 1</a> - some_description [Python]',
     ),
 ])
 def test_github_show_command(monkeypatch, args, expected_result):
@@ -404,14 +404,14 @@ class _DummyOffsetState:
         [
             '/show',
         ],
-        '<a href="http://example.com">some_name 7</a> - some_description',
+        '<a href="http://example.com">some_name 7</a> - some_description [Python]',
         4,
     ),
     (
         [
             '/show 3',
         ],
-        '<a href="http://example.com">some_name 3</a> - some_description',
+        '<a href="http://example.com">some_name 3</a> - some_description [Python]',
         4,
     ),
     (
