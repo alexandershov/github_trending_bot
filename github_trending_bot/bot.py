@@ -134,7 +134,10 @@ class GithubShowCommand:
 
 
 class TimestampCommand:
+    _USAGE_STRING = 'usage: /timestamp %Y-%m-%dT%H:%M:%S'
+
     def __call__(self, args):
+        self._validate_args(args)
         if not args:
             naive_d_time = dt.datetime.utcnow()
         else:
@@ -142,8 +145,12 @@ class TimestampCommand:
             try:
                 naive_d_time = dt.datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%S')
             except ValueError:
-                raise InvalidCommand('usage: /timestamp %Y-%m-%dT%H:%M:%S')
+                raise InvalidCommand(TimestampCommand._USAGE_STRING)
         return str(naive_d_time.replace(tzinfo=dt.timezone.utc).timestamp())
+
+    def _validate_args(self, args):
+        if len(args) > 1:
+            raise InvalidCommand(f'too many arguments, {TimestampCommand._USAGE_STRING}')
 
 
 class GithubApi:

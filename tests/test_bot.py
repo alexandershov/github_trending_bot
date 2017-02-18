@@ -440,6 +440,12 @@ class _DummyOffsetState:
     ),
     (
         [
+            '/timestamp first second',
+        ],
+        'too many arguments, usage: /timestamp %Y-%m-%dT%H:%M:%S',
+    ),
+    (
+        [
             '/help',
             '/start',
         ],
