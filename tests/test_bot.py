@@ -428,6 +428,12 @@ class _DummyOffsetState:
     ),
     (
         [
+            '/timestamp 2017-02-05T03:04:05',
+        ],
+        '1486263845.0',
+    ),
+    (
+        [
             '/help',
             '/start',
         ],

@@ -137,6 +137,9 @@ class TimestampCommand:
     def __call__(self, args):
         if not args:
             return str(dt.datetime.now(dt.timezone.utc).timestamp())
+        date_string = args[0]
+        d_time = dt.datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%S')
+        return str(d_time.replace(tzinfo=dt.timezone.utc).timestamp())
 
 
 class GithubApi:
