@@ -405,31 +405,28 @@ class _DummyOffsetState:
         raise _BreakFromInfiniteLoop
 
 
-@pytest.mark.parametrize('update_texts, expected_text, expected_offset_state', [
+@pytest.mark.parametrize('update_texts, expected_text', [
     (
         [
             '/show',
         ],
         f'<a href="http://example.com">some_name 7</a> - some_description [Python {bot.STAR_SYMBOL}3]',
-        4,
     ),
     (
         [
             '/show 3',
         ],
         f'<a href="http://example.com">some_name 3</a> - some_description [Python {bot.STAR_SYMBOL}3]',
-        4,
     ),
     (
         [
             '/help',
-            '/start'
+            '/start',
         ],
         bot.HELP_TEXT,
-        4,
     ),
 ])
-def test_main(monkeypatch, update_texts, expected_text, expected_offset_state):
+def test_main(monkeypatch, update_texts, expected_text):
     updates = []
     for text in update_texts:
         message = bot.Message(
@@ -453,7 +450,7 @@ def test_main(monkeypatch, update_texts, expected_text, expected_offset_state):
         assert kwargs['parse_mode'] == 'HTML'
         assert kwargs['disable_web_page_preview']
         assert kwargs['disable_notification']
-    assert offset_state.offset == expected_offset_state
+    assert offset_state.offset == 4
 
 
 def _monkeypatch_for_main(monkeypatch, updates):
