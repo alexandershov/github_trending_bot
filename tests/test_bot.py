@@ -142,9 +142,9 @@ def test_format_html_message():
     ]
     actual_message = bot.format_html_message(repositories)
     expected_message = (
-        f'<a href="http://first.example.com">first_name</a> - first_description [Python {bot.STAR_SYMBOL}3]\n\n'
+        f'<a href="http://first.example.com">first_name</a> - first_description [Python 3{bot.STAR_SYMBOL}]\n\n'
         f'<a href="http://&#x27;second&quot;.example.com">&lt;&amp;second_name&gt;</a>'
-        f' - &lt;&amp;second_description&gt; [{bot.STAR_SYMBOL}2]'
+        f' - &lt;&amp;second_description&gt; [2{bot.STAR_SYMBOL}]'
     )
     assert actual_message == expected_message
 
@@ -360,11 +360,11 @@ def _make_repo(age_in_days):
     # 7 by default
     (
         [],
-        f'<a href="http://example.com">some_name 7</a> - some_description [Python {bot.STAR_SYMBOL}3]',
+        f'<a href="http://example.com">some_name 7</a> - some_description [Python 3{bot.STAR_SYMBOL}]',
     ),
     (
         ['1'],
-        f'<a href="http://example.com">some_name 1</a> - some_description [Python {bot.STAR_SYMBOL}3]',
+        f'<a href="http://example.com">some_name 1</a> - some_description [Python 3{bot.STAR_SYMBOL}]',
     ),
 ])
 def test_github_show_command(monkeypatch, args, expected_result):
@@ -412,13 +412,13 @@ class _DummyOffsetState:
         [
             '/show',
         ],
-        f'<a href="http://example.com">some_name 7</a> - some_description [Python {bot.STAR_SYMBOL}3]',
+        f'<a href="http://example.com">some_name 7</a> - some_description [Python 3{bot.STAR_SYMBOL}]',
     ),
     (
         [
             '/show 3',
         ],
-        f'<a href="http://example.com">some_name 3</a> - some_description [Python {bot.STAR_SYMBOL}3]',
+        f'<a href="http://example.com">some_name 3</a> - some_description [Python 3{bot.STAR_SYMBOL}]',
     ),
     (
         [
