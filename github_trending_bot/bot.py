@@ -375,9 +375,10 @@ def format_html_message(repositories: tp.List[Repo]) -> str:
     for repo in repositories:
         part = f'<a href="{html.escape(repo.html_url)}">{html.escape(repo.name)}</a> - {html.escape(repo.description)}'
         if repo.language is not None:
-            part += f' [{html.escape(repo.language)} {repo.stargazers_count}{STAR_SYMBOL}]'
+            language_part = f'{html.escape(repo.language)} '
         else:
-            part += f' [{repo.stargazers_count}{STAR_SYMBOL}]'
+            language_part = ''
+        part += f' [{language_part}{repo.stargazers_count}{STAR_SYMBOL}]'
         message_parts.append(part)
     return '\n\n'.join(message_parts)
 
